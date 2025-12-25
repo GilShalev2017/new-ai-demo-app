@@ -1,0 +1,259 @@
+<div class="main-div">
+  <!-- Sticky toolbar section -->
+  <div class="sticky-div" *ngIf="!welcomeScreenShown">
+    <!-- Main toolbar -->
+    <mat-toolbar class="search-toolbar">
+      <span class="clips-span">📹 Clips</span>
+
+      <div class="search-container">
+        <div
+          class="search-div"
+          [ngClass]="{ expanded: isSearchExpanded }"
+          (click)="onSearchClick()"
+        >
+          <div class="animated-search">
+            <div class="animated-search-div">
+              <input
+                autocomplete="off"
+                (ngModelChange)="onSearchClips($event)"
+                [(ngModel)]="searchTerm"
+                type="text"
+                [placeholder]="searchPlaceholder"
+                class="override-placeholder-style"
+                [ngClass]="{ 'has-text': hasText }"
+                (input)="onInput()"
+              />
+              <div class="input-icon left-input-icon">
+                <mat-icon>search</mat-icon>
+              </div>
+              <div class="input-icon right-input-icon" *ngIf="searchTerm !== ''">
+                <mat-icon (click)="onSearchClips('')">close</mat-icon>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <mat-hint class="search-hint">
+          Search for &nbsp;
+          <mat-select class="primary-color" [(ngModel)]="selectedSearch" style="font-weight: 500">
+            <mat-option
+              value="ALL"
+              matTooltip="Filter by all the words"
+              (click)="searchOperandAnd = true; searchOperandChanged()"
+              >ALL</mat-option
+            >
+            <mat-option
+              value="ANY"
+              matTooltip="Filter by any of the words"
+              (click)="searchOperandAnd = false; searchOperandChanged()"
+              >ANY</mat-option
+            >
+          </mat-select>
+          words.
+        </mat-hint>
+      </div>
+
+      <span class="example-spacer"></span>
+
+      <button class="action-button refresh-button" (click)="refreshAll()">
+        <mat-icon class="button-icon">refresh</mat-icon>
+        <span class="button-text">Refresh</span>
+      </button>
+
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="addNewClip()"
+        class="add-clip-button"
+        *ngIf="userRight === 2"
+      >
+        <mat-icon>add</mat-icon>
+        New Clip
+      </button>
+    </mat-toolbar>
+
+    <!-- Filters toolbar -->
+    <mat-toolbar
+      class="filters-toolbar sliding-toolbar"
+      [ngClass]="{ 'hidden-toolbar': isLowerToolbarHidden }"
+    >
+      <div class="category-toolbar">
+        <mat-icon (click)="scrollCategories(-1)" class="arrow-icon" *ngIf="showLeftButton()">
+          chevron_left
+        </mat-icon>
+
+        <div class="category-container" #categoryContainer>
+          <div
+            class="category"
+            *ngFor="let tag of availableTags"
+            [matTooltip]="tag.text"
+            [ngClass]="{ selected: tag.selected }"
+            (click)="toggleTagSelection(tag)"
+          >
+            {{ tag.text }}
+          </div>
+        </div>
+
+        <mat-icon (click)="scrollCategories(1)" class="arrow-icon" *ngIf="showRightButton()">
+          chevron_right
+        </mat-icon>
+      </div>
+
+      <span class="example-spacer"></span>
+
+      <mat-form-field appearance="outline" class="filter-field">
+        <mat-label>Time Period</mat-label>
+        <mat-select
+          [(value)]="timeInterval.intervalType"
+          (selectionChange)="onTimeFilterIntervalChanged(timeInterval)"
+        >
+          <mat-option value="all">All time</mat-option>
+          <mat-option value="today">Today</mat-option>
+          <mat-option value="week">Last 7 days</mat-option>
+          <mat-option value="month">Last 30 days</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="filter-field sort-container">
+        <mat-label>Sort by</mat-label>
+        <mat-select [(value)]="selectedSortOption" (selectionChange)="dateChanged()">
+          <mat-option [value]="0">Newest</mat-option>
+          <mat-option [value]="1">Oldest</mat-option>
+          <mat-option [value]="2">A → Z</mat-option>
+          <mat-option [value]="3">Z → A</mat-option>
+          <mat-option [value]="4">Longest</mat-option>
+          <mat-option [value]="5">Shortest</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </mat-toolbar>
+
+    <!-- Toggle filters button -->
+    <button
+      class="appendix mat-stroked-button"
+      (click)="toggleLowerToolbars()"
+      [class.show-filters]="!isLowerToolbarHidden"
+    >
+      <mat-icon *ngIf="isLowerToolbarHidden" class="appendix-button">expand_more</mat-icon>
+      <mat-icon *ngIf="!isLowerToolbarHidden" class="appendix-button">expand_less</mat-icon>
+      <span *ngIf="isLowerToolbarHidden" class="appendix-text">Show filters</span>
+      <span *ngIf="!isLowerToolbarHidden" class="appendix-text">Hide filters</span>
+    </button>
+
+    <!-- Summary toolbar -->
+    <mat-toolbar
+      class="clips-summary-toolbar sliding-toolbar"
+      [ngClass]="{ 'hidden-toolbar': isLowerToolbarHidden }"
+    >
+      <mat-checkbox
+        class="select-all-clips"
+        [checked]="isAllClipsSelected"
+        (change)="selectAllClips($event.checked)"
+      >
+      </mat-checkbox>
+
+      <span class="summary-font clips-length"> {{ filteredClips.length }} Clips </span>
+
+      <mat-hint *ngIf="filteredClips.length === limitNumberOfClips" class="clips-limit-hint">
+        Displaying first {{ limitNumberOfClips }} clips.
+        <span class="primary-color" matTooltip="Consider narrowing down results using filters"
+          >(*)</span
+        >
+      </mat-hint>
+
+      <mat-divider [vertical]="true" class="divider"></mat-divider>
+
+      <span *ngIf="selectedClips.length > 0" class="summary-font selected-clips">
+        {{ selectedClips.length }} Clips Selected
+      </span>
+
+      <button
+        *ngIf="userRight === 2 && selectedClips.length > 0"
+        class="action-button delete-button"
+        (click)="deleteSelected()"
+      >
+        <mat-icon class="button-icon" color="primary">delete</mat-icon>
+        <span class="button-text">Delete</span>
+      </button>
+
+      <mat-divider [vertical]="true" class="divider" *ngIf="selectedTags.length > 0"></mat-divider>
+
+      <div *ngIf="selectedTags.length > 0" class="filtered-by-container">
+        <mat-icon
+          class="primary-color clear-filter-icon"
+          matTooltip="Clear filter"
+          (click)="unselectAllTags()"
+          >cancel</mat-icon
+        >
+        <span class="summary-font">Filtered by:</span>
+        <div class="selected-category-container primary-color">
+          <div
+            class="selected-category summary-font"
+            *ngFor="let tag of selectedTags; let last = last"
+            [matTooltip]="tag"
+            (click)="unselectTag(tag)"
+          >
+            {{ tag }}{{ !last ? ',' : '' }}
+          </div>
+        </div>
+      </div>
+
+      <span class="example-spacer"></span>
+    </mat-toolbar>
+  </div>
+
+  <!-- Welcome screen (no clips) -->
+  <div *ngIf="welcomeScreenShown" class="welcome-screen">
+    <div class="image-container">
+      <mat-icon class="welcome-icon">video_library</mat-icon>
+    </div>
+    <h2 class="no-clips-yet">You don't have any clips yet</h2>
+    <span>Create a clip and start using AI features</span>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="addNewClip()"
+      class="welcome-new-clip-button"
+    >
+      <mat-icon>add</mat-icon>
+      New Clip
+    </button>
+  </div>
+
+  <!-- Loading/No results screen -->
+  <div *ngIf="!welcomeScreenShown && filteredClips.length === 0" class="welcome-screen">
+    <div class="image-container">
+      <mat-icon class="welcome-icon">{{ isSearching ? 'hourglass_empty' : 'search_off' }}</mat-icon>
+    </div>
+    <h2 *ngIf="isSearching" class="no-clips-yet">Loading clips...</h2>
+    <h2 *ngIf="!isSearching" class="no-clips-yet">No Clips Found...</h2>
+  </div>
+
+  <!-- Clips gallery -->
+  <div
+    *ngIf="filteredClips.length > 0"
+    class="video-clip-gallery"
+    [style.height]="getGalleryHeight()"
+  >
+    <div class="clip-card" *ngFor="let clip of filteredClips" (click)="goToClip(clip)">
+      <div class="clip-thumbnail">
+        <img [src]="clip.thumbnailUrl" [alt]="clip.title" />
+        <div class="clip-duration">{{ formatDuration(clip.duration) }}</div>
+        <div class="clip-checkbox" (click)="$event.stopPropagation()">
+          <mat-checkbox [checked]="clip.selected" (change)="toggleClipSelection(clip)">
+          </mat-checkbox>
+        </div>
+      </div>
+
+      <div class="clip-info">
+        <div class="clip-title">{{ clip.title }}</div>
+        <div class="clip-meta">
+          <span>📺 {{ clip.channelName }}</span>
+          <span>{{ getTimeAgo(clip.createdAt) }}</span>
+        </div>
+        <div class="clip-tags">
+          <span class="tag" *ngFor="let tag of clip.tags">{{ tag }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,193 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+// ============================================
+// Toolbar Styles
+// ============================================
+.app-toolbar {
+  background: linear-gradient(135deg, #6b46c1 0%, #553c9a 100%);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 0 16px;
+
+  .menu-button {
+    margin-right: 16px;
+  }
+
+  .logo {
+    height: 32px;
+    margin-right: 12px;
+  }
+
+  .app-title {
+    font-size: 20px;
+    // font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .spacer {
+    flex: 1 1 auto;
+  }
+
+  .version-info {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-right: 20px;
+  }
+
+  .user-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .username {
+      font-size: 14px;
+      margin-left: 4px;
+    }
+  }
+}
+
+// ============================================
+// Sidenav Container
+// ============================================
+.sidenav-container {
+  flex: 1;
+  overflow: hidden;
+}
+
+.sidenav {
+  width: 240px;
+  background: #f8f9fa;
+  border-right: 1px solid #e0e0e0;
+  padding: 0;
+
+  .mat-nav-list {
+    padding-top: 0;
+  }
+}
+
+// ============================================
+// Navigation Sections
+// ============================================
+.nav-section {
+  border-bottom: 1px solid #e0e0e0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.nav-section-header {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  font-weight: 500;
+  color: #333;
+
+  &:hover {
+    background-color: #e9ecef;
+  }
+
+  mat-icon {
+    margin-right: 12px;
+    color: #6b46c1;
+  }
+
+  span {
+    flex: 1;
+  }
+
+  .expand-icon {
+    margin-right: 0;
+    margin-left: auto;
+    color: #666;
+  }
+}
+
+.nav-subsection {
+  background-color: #ffffff;
+  padding: 4px 0;
+
+  a.mat-list-item {
+    padding-left: 52px;
+    height: 40px;
+    font-size: 14px;
+    color: #555;
+    transition: all 0.2s;
+
+    mat-icon {
+      margin-right: 12px;
+      color: #999;
+      font-size: 20px;
+    }
+
+    &:hover {
+      background-color: #f0f0f0;
+      color: #333;
+
+      mat-icon {
+        color: #6b46c1;
+      }
+    }
+
+    &.active-link {
+      background-color: #e8e0f5;
+      color: #6b46c1;
+      font-weight: 500;
+      border-left: 3px solid #6b46c1;
+
+      mat-icon {
+        color: #6b46c1;
+      }
+    }
+  }
+}
+
+// ============================================
+// Main Content Area
+// ============================================
+.main-content {
+  background-color: #f5f7fa;
+  overflow-y: auto;
+  height: 100%;
+}
+
+// ============================================
+// Responsive Design
+// ============================================
+@media (max-width: 768px) {
+  .sidenav {
+    width: 200px;
+  }
+
+  .app-toolbar {
+    .version-info {
+      display: none;
+    }
+
+    .username {
+      display: none;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .app-toolbar {
+    .app-title {
+      font-size: 16px;
+    }
+
+    .logo {
+      height: 24px;
+    }
+  }
+}

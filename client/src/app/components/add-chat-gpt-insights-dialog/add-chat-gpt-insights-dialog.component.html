@@ -1,0 +1,293 @@
+<div
+  class="ott ott-background-200 ott-border-color-1000 add-insights-dialog"
+  [ngClass]="{ 'has-run': hasRun }"
+>
+  <h2 mat-dialog-title>
+    {{ data.isUserDefined ? 'Run your own ChatGPT prompt' : 'Add clip insights' }}
+  </h2>
+  <mat-dialog-content [ngClass]="{ 'content-has-run': hasRun }">
+    <div>
+      <ng-container *ngIf="!data.isUserDefined; else userDefinedInsight">
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Add insights</mat-label>
+          <mat-select
+            #select
+            [(value)]="selectedInsights"
+            placeholder="Select insights"
+            multiple
+            (selectionChange)="onSelectionChange($event)"
+          >
+            <mat-option
+              *ngFor="let insight of availableInsightTypeDefinitions"
+              [value]="insight?.Name"
+            >
+              {{ insight?.DisplayName }}
+              <!-- class="link-like" -->
+              <span *ngIf="!insight.IsCustom" [matTooltip]="insight.Prompt">(*Built-in)</span>
+            </mat-option>
+            <!-- <button mat-button (click)="select.close()">Done</button> -->
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Add translation languages (optional)</mat-label>
+          <mat-select
+            [(value)]="selectedLanguages"
+            placeholder="Select target language"
+            multiple
+            [disabled]="!selectedInsights || selectedInsights?.length === 0"
+          >
+            <mat-option *ngFor="let lng of languages" [value]="lng">
+              {{ lng?.DisplayName }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </ng-container>
+
+      <ng-template #userDefinedInsight>
+        <mat-form-field appearance="outline" class="form-field">
+          <mat-label>Define your Prompt Here</mat-label>
+          <textarea
+            [(ngModel)]="userDefinedPrompt"
+            matInput
+            (input)="
+              userDefinedPrompt = this.capitalizeFirstLetter($event); onPromptChanged($event)
+            "
+            [disabled]="hasRun && !insightProcessingDone"
+            [rows]="9"
+            placeholder="Here are some examples:
+
+Summarization: 'Summarize the main events from the text.',
+Keyword extraction: 'What are the key topics mentioned in the text?',
+Find specific information: 'Find all the dates and events mentioned in the text.',
+Identify people: 'List all the people mentioned in the text',
+Contextual search: 'Show me all the places referenced in the text.',
+
+For more examples and tips how to write ChatGPT prompts - see the link below"
+          ></textarea>
+        </mat-form-field>
+
+        <ng-template #dialogTemplate>
+          <div class="ott ott-background-200 ott-border-color-1000 add-insights-dialog">
+            <h1 mat-dialog-title>How to write ChatGPT prompts?</h1>
+            <mat-dialog-content>
+              <p>
+                <strong>Reference the Transcribed Text Clearly:</strong> Ensure your queries
+                specifically mention the transcribed text by including phrases like "in the
+                text."<br />
+                This helps the AI understand the correct context. Avoid using terms such as "clip"
+                or "video".<br />
+                Example:
+              </p>
+              <ul>
+                <li><strong>Good:</strong> "Find all the cities mentioned in the text."</li>
+                <li><strong>Avoid:</strong> "Find all the cities mentioned in the video."</li>
+              </ul>
+
+              <p>
+                <strong>Expand with additional information:</strong> You can ask the AI to provide
+                extra information that isn’t in the transcription.<br />
+                For instance: "Find all the cities mentioned in the text" (found in the text), and
+                "Show their latitude and longitude coordinates" <br />
+                (additional information from the AI).
+              </p>
+
+              <p>
+                <strong>Language flexibility:</strong> You can write your prompt in any language and
+                request the response in another.<br />
+                For example: "Mostrar todas las ubicaciones mencionadas en el texto. Devuelve tu
+                respuesta en francés"
+                <br />
+                (written in Spanish, requesting the answer in French).
+              </p>
+
+              <p>
+                <strong>Text formatting:</strong> You can request specific formatting for the
+                response. For example: "Find all the locations in this text.<br />
+                Present it in a table with two columns: 'Location' and 'Description.'"
+              </p>
+
+              <p>
+                <strong>Choosing Between Text-Only and Timestamped Transcriptions: </strong> To run
+                queries that include time elements, such as specific timestamps or time ranges,<br />
+                please select the 'Timestamped transcription' option. For general queries based on
+                the transcription content without time references,<br />
+                you can leave the default 'Text-only transcription' option selected.
+              </p>
+
+              <p>
+                <strong>Suggested Prompts:</strong> Here are some prompts that users can use to
+                explore the text generated from speech-to-text:
+              </p>
+              <ul>
+                <li><strong>Summarization:</strong> "Summarize the main events from the text."</li>
+                <li>
+                  <strong>Keyword extraction:</strong> "What are the key topics mentioned in the
+                  text?"
+                </li>
+                <li>
+                  <strong>Sentiment analysis:</strong> "Analyze the sentiment of the speaker in this
+                  text."
+                </li>
+                <li>
+                  <strong>Find specific information:</strong> "Find all the dates and events
+                  mentioned in the text."
+                </li>
+                <li>
+                  <strong>Identify people:</strong> "List all the people mentioned in the text."
+                </li>
+                <li>
+                  <strong>Contextual search:</strong> "Show me all the places referenced in the
+                  text."
+                </li>
+                <li>
+                  <strong>Question generation:</strong> "What questions can be formed based on the
+                  text?"
+                </li>
+                <li>
+                  <strong>Time-specific query:</strong> "What happens between the time range
+                  00:05:00 and 00:10:00?"
+                </li>
+                <li><strong>Fact-checking:</strong> "Verify any factual claims in the text."</li>
+                <li>
+                  <strong>Tone and language analysis:</strong> "What tone does the speaker use in
+                  the text, and how formal is the language?"
+                </li>
+              </ul>
+
+              <p>
+                <strong>Note: </strong>Running the same prompt multiple times may yield different
+                results, as the AI generates responses based on context <br />
+                and interpretation. For consistent results, you can refine or specify your prompt
+                more clearly.
+              </p>
+
+              <p>
+                <strong> Disclaimer: </strong> The responses generated by the AI are based on the
+                data provided and its interpretation of the prompt. Please note that while we
+                strive<br />
+                to provide accurate and helpful responses, we cannot guarantee the reliability,
+                accuracy, or appropriateness of the information produced by the AI. <br />
+                Use of the AI-generated content is at your discretion, and we are not responsible
+                for any outcomes or decisions based on these responses.
+              </p>
+            </mat-dialog-content>
+            <mat-dialog-actions>
+              <button mat-stroked-button mat-dialog-close (click)="onCloseHelpDialog()">Close</button>
+            </mat-dialog-actions>
+          </div>
+        </ng-template>
+
+        <div class="buttons-wrapper">
+          <div class="left-button">
+            <mat-radio-group
+              aria-label="Select an option"
+              [(ngModel)]="queryType"
+              style="display: flex">
+              <span style="margin-right: 5px">Run with a</span>
+              <div style="display: flex; align-items: center; text-decoration-line: underline">
+                <mat-radio-button
+                  value="content-based"
+                  matTooltip="Focuses on analyzing the transcription without time elements."
+                >
+                  text-only transcription
+                </mat-radio-button>
+              </div>
+              <span style="margin: 0 5px"> or a</span>
+              <div style="display: flex; align-items: center; text-decoration-line: underline">
+                <mat-radio-button
+                  value="timestamp-based"
+                  matTooltip="Allows queries that take the time range of each line into account."
+                >
+                  timestamped transcription
+                </mat-radio-button>
+              </div>
+            </mat-radio-group>
+            <a href="#" (click)="$event.preventDefault(); openPromptInfoDialog()"
+              >How to write ChatGPT prompts</a
+            >
+          </div>
+          <div class="buttons-container">
+            <button mat-stroked-button (click)="onClose()" *ngIf="!hasRun" style="height: 34px">
+              Close
+            </button>
+            <button
+              mat-stroked-button
+              color="primary"
+              style="margin-left: 10px; height: 34px"
+              (click)="runInsight()"
+              [disabled]="
+                !userDefinedPrompt ||
+                (hasRun && !insightProcessingDone) ||
+                !isTestEnabled ||
+                !insightName
+              "
+              matTooltip="Run your prompt"
+            >
+              <mat-icon>send</mat-icon>
+            </button>
+          </div>
+        </div>
+        <div class="result-container" *ngIf="hasRun" style="margin-top: 20px">
+          <!-- <app-insight
+            [aiClip]="data.aiClip"
+            [title]="insightName"
+            [showTitle]="false"
+            [insightTypeString]="insightName"
+            [showChart]="false"
+            [translationSupport]="false"
+            [isMaximizeDisabled]="true"
+            [isDeleteDisabled]="true"
+            [showPromptSupport]="false"
+            class="insight-item"
+          >
+          </app-insight> -->
+
+          <div class="post-run-buttons" *ngIf="hasRun" style="display: flex; align-items: center">
+            <div style="display: flex; align-items: center">
+              <span *ngIf="insightProcessingDone && !isDirty">Save Insight for: </span>
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="saveInsight()"
+                *ngIf="insightProcessingDone && !isDirty"
+                style="margin-left: 10px"
+              >
+                Current Clip
+              </button>
+              <span *ngIf="insightProcessingDone && !isDirty" style="margin-left: 10px">or</span>
+              <button
+                mat-raised-button
+                style="margin-left: 10px"
+                color="primary"
+                matTooltip="Share the insight across all clips"
+                (click)="publishInsight()"
+                *ngIf="insightProcessingDone && !isDirty"
+              >
+                All Clips
+              </button>
+            </div>
+            <button
+              mat-stroked-button
+              style="margin-left: auto"
+              (click)="onCloseAddNewPrompt()"
+              [disabled]="!insightProcessingDone"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </ng-template>
+    </div>
+  </mat-dialog-content>
+  <mat-dialog-actions *ngIf="!data.isUserDefined" class="button-actions">
+    <button mat-stroked-button (click)="onClose()">Close</button>
+    <button
+      mat-raised-button
+      color="primary"
+      (click)="onAddInsights()"
+      [disabled]="!selectedInsights || selectedInsights.length === 0"
+    >
+      Add Insights
+    </button>
+  </mat-dialog-actions>
+</div>

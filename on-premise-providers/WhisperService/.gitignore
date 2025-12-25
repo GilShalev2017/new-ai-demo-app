@@ -1,0 +1,13 @@
+# .gitignore for .NET projects
+
+bin/
+obj/
+.vs/
+wwwroot/
+logs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.log
+appsettings*.json   # optional, if you don't want to commit secrets

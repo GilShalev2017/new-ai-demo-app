@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "WhisperTranscriber": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\temp\\Whisper\\AudioFiles\\WION.mp3 C:\\temp\\Whisper\\Models Base 300 false en"
+    }
+  }
+}

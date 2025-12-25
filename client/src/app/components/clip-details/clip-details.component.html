@@ -1,0 +1,412 @@
+<!-- <div class="clip-details-container" *ngIf="clip$ | async as clip"> -->
+<div class="clip-details-container" *ngIf="!loading && clip">
+  <!-- Header with back button -->
+  <div class="clip-header">
+    <button mat-icon-button (click)="goBack()" class="back-button">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <h1 class="clip-title">{{ clip.title }}</h1>
+  </div>
+
+  <!-- Main content with splitter -->
+  <div class="clip-content">
+    <!-- Left Panel - Insights -->
+    <div class="left-panel" [style.width.%]="leftPaneSize">
+      <!-- Toolbar -->
+      <mat-toolbar class="insights-toolbar">
+        <div class="toolbar-left">
+          <span class="clip-meta">{{ clip.createdAt | date : 'short' }}</span>
+          <span class="clip-meta">{{ clip.channelName }}</span>
+          <span class="clip-meta">{{ formatDuration(clip.duration) }}</span>
+        </div>
+
+        <span class="spacer"></span>
+
+        <div class="toolbar-right">
+          <!-- View mode toggle -->
+          <button
+            mat-icon-button
+            [matTooltip]="viewMode === 'single' ? 'Two Columns View' : 'One Column View'"
+            (click)="toggleViewMode()"
+          >
+            <mat-icon>{{ viewMode === 'single' ? 'view_column' : 'view_agenda' }}</mat-icon>
+          </button>
+        </div>
+      </mat-toolbar>
+
+      <!-- Tabs -->
+      <mat-tab-group class="insights-tabs" [(selectedIndex)]="selectedTab">
+        <!-- Transcription Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>description</mat-icon>
+            <span>Transcription</span>
+          </ng-template>
+
+          <div class="tab-content" [ngClass]="{ 'two-columns': viewMode === 'double' }">
+            <div class="tab-header">
+              <mat-form-field appearance="outline" class="language-select">
+                <mat-label>Language</mat-label>
+                <mat-select value="english">
+                  <mat-option value="english">English</mat-option>
+                  <mat-option value="spanish">Spanish</mat-option>
+                  <mat-option value="french">French</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <div class="tab-actions">
+                <button mat-icon-button matTooltip="Copy">
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <button mat-icon-button matTooltip="Download">
+                  <mat-icon>download</mat-icon>
+                </button>
+                <button mat-icon-button matTooltip="Save as">
+                  <mat-icon>save_as</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  matTooltip="Delete Transcription"
+                  (click)="deleteTranscription()"
+                  [disabled]="!hasInsight('Transcription')"
+                  color="warn"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+                <button mat-icon-button matTooltip="Refresh">
+                  <mat-icon>refresh</mat-icon>
+                </button>
+              </div>
+
+              <mat-checkbox class="sync-checkbox"> Sync Transcript with Audio </mat-checkbox>
+            </div>
+            <div class="transcript-container">
+              <ng-container
+                *ngIf="!isInsightProcessing('Transcription'); else transcriptionSpinner"
+              >
+                <div *ngIf="!isErrorProcessing && !isTranslating" class="auto-overflow-y">
+                  <div
+                    class="ai-transcript-line transcript-line"
+                    [class.activeTranscript]="i === activeTranscriptIndex"
+                    *ngFor="let transcript of getInsightArray('Transcription'); let i = index"
+                    (click)="jumpToTimeFromLabel(transcript)"
+                  >
+                    <div class="transcript-columns">
+                      <div class="timestamp-column">
+                        <span class="ott-background-200 timestamp">
+                          {{ formatTime(transcript.startInSeconds) }}
+                        </span>
+                      </div>
+                      <div class="text-column">
+                        {{ transcript.text }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+
+              <ng-template #transcriptionSpinner>
+                <div class="insight-spinner">
+                  <mat-spinner diameter="48"></mat-spinner>
+                  <p>Creating transcription…</p>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Summary Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>summarize</mat-icon>
+            <span>Summary</span>
+          </ng-template>
+
+          <div class="tab-content">
+            <div class="tab-header">
+              <mat-form-field appearance="outline" class="language-select">
+                <mat-label>Language</mat-label>
+                <mat-select value="english">
+                  <mat-option value="english">English</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <div class="tab-actions">
+                <button mat-icon-button matTooltip="Copy">
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <button mat-icon-button matTooltip="Download">
+                  <mat-icon>download</mat-icon>
+                </button>
+                <button
+                  mat-icon-button
+                  matTooltip="Delete Summary"
+                  (click)="deleteSummary()"
+                  [disabled]="!hasInsight('Summary')"
+                  color="warn"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <div
+              class="summary-content"
+              *ngIf="!isInsightProcessing('Summary'); else summarySpinner"
+            >
+              <p>{{ getInsightString('Summary') }}</p>
+            </div>
+
+            <ng-template #summarySpinner>
+              <div class="insight-spinner">
+                <mat-spinner diameter="48"></mat-spinner>
+                <p>Generating summary…</p>
+              </div>
+            </ng-template>
+          </div>
+        </mat-tab>
+
+        <!-- Celebrities Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>star</mat-icon>
+            <span>Celebrities</span>
+          </ng-template>
+
+          <div class="tab-content">
+            <div class="tab-header">
+              <mat-form-field appearance="outline" class="language-select">
+                <mat-label>Language</mat-label>
+                <mat-select value="english">
+                  <mat-option value="english">English</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <div class="tab-actions">
+                <button mat-icon-button matTooltip="Copy">
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <!-- <button mat-icon-button matTooltip="Delete">
+                  <mat-icon>delete</mat-icon>
+                </button> -->
+                <button
+                  mat-icon-button
+                  matTooltip="Delete Celebrities"
+                  (click)="deleteCelebrities()"
+                  [disabled]="!hasInsight('Celebrities')"
+                  color="warn"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+                <button mat-icon-button matTooltip="Refresh">
+                  <mat-icon>refresh</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="celebrities-content">
+              <h3>Personalities mentioned in this clip:</h3>
+              <ul class="celebrities-list">
+                <li *ngFor="let celebrity of celebrities">
+                  <strong>{{ celebrity.name }}</strong>
+                  <span class="celebrity-role">({{ celebrity.role }})</span>
+                  <span class="celebrity-nationality"
+                    >(Nationality: {{ celebrity.nationality }})</span
+                  >
+                </li>
+              </ul>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Locations Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>location_on</mat-icon>
+            <span>Locations</span>
+          </ng-template>
+
+          <div class="tab-content">
+            <div class="tab-header">
+              <mat-form-field appearance="outline" class="language-select">
+                <mat-label>Language</mat-label>
+                <mat-select value="english">
+                  <mat-option value="english">English</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <div class="tab-actions">
+                <button mat-icon-button matTooltip="Copy">
+                  <mat-icon>content_copy</mat-icon>
+                </button>
+                <!-- <button mat-icon-button matTooltip="Delete">
+                  <mat-icon>delete</mat-icon>
+                </button> -->
+                <button
+                  mat-icon-button
+                  matTooltip="Delete Locations"
+                  (click)="deleteLocations()"
+                  [disabled]="!hasInsight('Locations')"
+                  color="warn"
+                >
+                  <mat-icon>delete</mat-icon>
+                </button>
+                <button mat-icon-button matTooltip="Refresh">
+                  <mat-icon>refresh</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <div class="locations-content">
+              <ul class="locations-list">
+                <li *ngFor="let location of locations; let i = index">
+                  <strong>{{ i + 1 }}. Location: {{ location.name }}</strong>
+                  <div class="location-details">
+                    <span *ngIf="location.lat">Latitude: {{ location.lat }}</span>
+                    <span *ngIf="location.lng">Longitude: {{ location.lng }}</span>
+                  </div>
+                  <p class="location-context">{{ location.context }}</p>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Demo Insight Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon>lightbulb</mat-icon>
+            <span>DEMO INSIGHT</span>
+          </ng-template>
+
+          <div class="tab-content">
+            <div class="demo-insight-content">
+              <h3>Demo Insight Data</h3>
+              <p>Additional insights and analytics will appear here.</p>
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </div>
+
+    <!-- Splitter -->
+    <div class="splitter" (mousedown)="onSplitterDrag($event)"></div>
+
+    <!-- Right Panel - Video Player -->
+    <div class="right-panel" [style.width.%]="100 - leftPaneSize">
+      <!-- Video Player -->
+      <div class="video-container">
+        <video
+          #videoPlayer
+          [src]="getVideoUrl(clip.videoUrl)"
+          (timeupdate)="onTimeUpdate()"
+          controls
+          class="video-player"
+        >
+          Your browser does not support the video tag.
+        </video>
+
+        <div class="video-info">
+          <span class="video-channel">📺 {{ clip.channelName }}</span>
+          <span class="video-date">{{ clip.createdAt | date : 'medium' }}</span>
+        </div>
+      </div>
+
+      <!-- Actions Section -->
+      <div class="actions-section">
+        <h3>Actions</h3>
+        <div class="action-buttons">
+          <button mat-flat-button color="primary" (click)="addClipInsights()">
+            <mat-icon>add</mat-icon>
+            Add Clip Insights
+          </button>
+
+          <button mat-stroked-button (click)="manageInsights()">
+            <mat-icon>tune</mat-icon>
+            Manage Insights
+          </button>
+
+          <button mat-stroked-button (click)="chatGPTPrompts()">
+            <mat-icon>psychology</mat-icon>
+            ChatGPT Prompts
+          </button>
+
+          <button mat-stroked-button (click)="shareClip()">
+            <mat-icon>share</mat-icon>
+            Share
+          </button>
+
+          <button mat-stroked-button (click)="reportClip()">
+            <mat-icon>report</mat-icon>
+            Report
+          </button>
+
+          <button mat-stroked-button (click)="downloadClip()">
+            <mat-icon>download</mat-icon>
+            Download
+          </button>
+        </div>
+      </div>
+
+      <!-- Tags Section -->
+      <div class="tags-section">
+        <h3>Tags</h3>
+        <div class="tags-container">
+          <mat-chip-set>
+            <mat-chip *ngFor="let tag of clip.tags" [removable]="true">
+              {{ tag }}
+              <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+          </mat-chip-set>
+          <button mat-icon-button color="primary" (click)="addTags()">
+            <mat-icon>add</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- General Information Section -->
+      <div class="info-section">
+        <h3>General Information</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <mat-icon>tv</mat-icon>
+            <div class="info-details">
+              <span class="info-label">Channel</span>
+              <span class="info-value">{{ clip.channelName }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <mat-icon>schedule</mat-icon>
+            <div class="info-details">
+              <span class="info-label">Duration</span>
+              <span class="info-value">{{ formatDuration(clip.duration) }}</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <mat-icon>visibility</mat-icon>
+            <div class="info-details">
+              <span class="info-label">Visibility</span>
+              <span class="info-value">Public</span>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <mat-icon>language</mat-icon>
+            <div class="info-details">
+              <span class="info-label">Audio Language</span>
+              <span class="info-value">English</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="loading-container" *ngIf="loading">
+  <mat-spinner></mat-spinner>
+  <p>Loading clip details...</p>
+</div>

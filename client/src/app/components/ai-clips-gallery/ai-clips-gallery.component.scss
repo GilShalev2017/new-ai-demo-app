@@ -1,0 +1,619 @@
+// ============================================
+// FILE: ai-clips-gallery.component.scss
+// ============================================
+
+// Main container
+.main-div {
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  background-color: #f5f7fa;
+}
+
+// Sticky toolbar section
+.sticky-div {
+  position: sticky;
+  top: 0;
+  z-index: 99;
+}
+
+// ============================================
+// Main Toolbar Styles
+// ============================================
+.search-toolbar {
+  background: #5f6cba;
+  color: white;
+  position: relative;
+  border-bottom: 1px solid #4a5a9a;
+}
+
+.clips-span {
+  margin-right: 13px;
+  margin-left: 8px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.search-container {
+  background: white;
+  border-radius: 6px;
+  margin-left: 24px;
+  margin-top: -6px;
+  position: relative;
+  padding: 8px;
+}
+
+.search-div {
+  min-width: 310px;
+  display: grid;
+  position: relative;
+  transition: min-width 0.4s ease-in-out;
+
+  .animated-search {
+    width: 310px;
+    overflow: hidden;
+    justify-self: left;
+    transition: all 0.4s ease-in-out;
+
+    .animated-search-div {
+      height: 33.5px;
+      line-height: 1.125;
+      position: relative;
+
+      input {
+        width: 100%;
+        padding: 8px 40px 8px 40px;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        border-radius: 6px;
+        
+        &.has-text {
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  &.expanded .animated-search {
+    width: 450px;
+    opacity: 1;
+  }
+}
+
+.input-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  cursor: pointer;
+  
+  &.left-input-icon {
+    left: 10px;
+  }
+  
+  &.right-input-icon {
+    right: 10px;
+    
+    &:hover {
+      color: #333;
+    }
+  }
+}
+
+.search-hint {
+  position: absolute;
+  bottom: -22px;
+  left: 10px;
+  color: #6c757d;
+  font-size: 12px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  
+  mat-select {
+    font-size: 12px;
+    margin: 0 4px;
+  }
+}
+
+.example-spacer {
+  flex: 1 1 auto;
+}
+
+.action-button {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: none;
+  padding: 0 15px;
+  line-height: 32.5px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  .button-icon {
+    vertical-align: text-bottom;
+    font-size: 20px;
+  }
+  
+  .button-text {
+    padding-left: 5px;
+  }
+}
+
+.refresh-button {
+  margin-left: 13px;
+}
+
+.add-clip-button {
+  margin-left: 13px;
+  margin-right: 8px;
+  line-height: 32.5px;
+  background: #764ba2;
+  
+  mat-icon {
+    margin-right: 5px;
+  }
+}
+
+// ============================================
+// Filters Toolbar Styles
+// ============================================
+.filters-toolbar {
+  border: 1px solid #dee2e6;
+  border-top: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  background-color: white;
+  position: sticky;
+  top: 64px;
+  z-index: 98;
+}
+
+.sliding-toolbar {
+  transition: height 0.3s ease-in-out, padding 0.3s ease-in-out;
+  overflow: hidden;
+}
+
+.hidden-toolbar {
+  height: 0 !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  border: none !important;
+}
+
+// Category chips
+.category-toolbar {
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  flex: 1;
+  max-width: 60%;
+}
+
+.category-container {
+  display: flex;
+  gap: 8px;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow-x: hidden;
+  transition: transform 0.3s ease;
+  padding: 8px 0;
+}
+
+.category {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 32px;
+  font-size: 14px;
+  font-weight: 500;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  color: #495057;
+  
+  &:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+  }
+  
+  &.selected {
+    background: #5f6cba;
+    color: white;
+    border-color: #5f6cba;
+  }
+}
+
+.arrow-icon {
+  cursor: pointer;
+  transition: color 0.3s;
+  color: #6c757d;
+  margin: 0 8px;
+  
+  &:hover {
+    color: #5f6cba;
+  }
+}
+
+.filter-field {
+  margin-right: 12px;
+  margin-left: 8px;
+  margin-top: 8px;
+  min-width: 150px;
+}
+
+.sort-container {
+  margin-right: 12px;
+  margin-top: 8px;
+}
+
+// ============================================
+// Appendix Button (Show/Hide Filters)
+// ============================================
+.appendix {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  border-top: none;
+  line-height: 24px;
+  font-weight: 400;
+  border-radius: 0 0 8px 8px;
+  transition: all 0.2s ease-in-out;
+  background: white;
+  border: 1px solid #dee2e6;
+  border-top: none;
+  padding: 4px 16px;
+  cursor: pointer;
+  
+  &.show-filters {
+    margin-top: -1px;
+  }
+  
+  .appendix-button {
+    vertical-align: text-bottom;
+  }
+  
+  .appendix-text {
+    padding-left: 5px;
+  }
+  
+  &:hover {
+    background: #f8f9fa;
+  }
+}
+
+// ============================================
+// Summary Toolbar Styles
+// ============================================
+.clips-summary-toolbar {
+  position: sticky;
+  top: 128px;
+  z-index: 97;
+  background-color: white;
+  border: 1px solid #dee2e6;
+  border-top: none;
+}
+
+.summary-font {
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: normal;
+}
+
+.select-all-clips {
+  margin-top: 2px;
+  margin-left: 8px;
+}
+
+.clips-length {
+  padding: 10px;
+  font-weight: 600;
+}
+
+.selected-clips {
+  padding: 15px;
+}
+
+.delete-button {
+  padding: 0 15px;
+  line-height: 32.5px;
+  margin-left: 13px;
+  margin-right: 13px;
+}
+
+.divider {
+  height: 25px;
+  color: #dee2e6;
+  margin: 0 8px;
+}
+
+.clips-limit-hint {
+  font-size: 12px;
+  color: #6c757d;
+  margin-left: 15px;
+  
+  .primary-color {
+    color: #5f6cba;
+    cursor: help;
+  }
+}
+
+.filtered-by-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.clear-filter-icon {
+  cursor: pointer;
+  
+  &:hover {
+    opacity: 0.7;
+  }
+}
+
+.selected-category-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.selected-category {
+  cursor: pointer;
+  white-space: nowrap;
+  font-weight: 490;
+  
+  &:hover {
+    opacity: 0.7;
+  }
+}
+
+.primary-color {
+  color: #5f6cba;
+}
+
+// ============================================
+// Welcome Screen Styles
+// ============================================
+.welcome-screen {
+  overflow-y: auto;
+  box-sizing: content-box;
+  margin-top: 20vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  background: white;
+  border-radius: 12px;
+  margin: 20vh auto;
+  max-width: 500px;
+}
+
+.image-container {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 20px;
+}
+
+.welcome-icon {
+  font-size: 120px;
+  width: 120px;
+  height: 120px;
+  color: #5f6cba;
+  opacity: 0.3;
+}
+
+.no-clips-yet {
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: normal;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.welcome-new-clip-button {
+  display: inline-flex;
+  height: 40px;
+  margin: 30px 0;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 0 24px;
+  
+  mat-icon {
+    margin-right: 5px;
+  }
+}
+
+// ============================================
+// Clips Gallery Styles
+// ============================================
+.video-clip-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+  background-color: #f5f7fa;
+  z-index: 1;
+  padding: 20px;
+  overflow-y: auto;
+  box-sizing: content-box;
+}
+
+.clip-card {
+  //width: 315px;
+  //max-height: 320px;
+  // margin: 5px;
+  // padding: 5px;
+  height: 290px;
+
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s;
+  cursor: pointer;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  }
+}
+
+.clip-thumbnail {
+  width: 100%;
+  height: 160px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  position: relative;
+  overflow: hidden;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.clip-duration {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.clip-checkbox {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: transparent;// rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  padding: 2px;
+  
+  mat-checkbox {
+    display: block;
+    color: orange;
+  }
+}
+
+.clip-info {
+  padding: 12px;
+}
+
+.clip-title {
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 15px;
+  color: #333;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clip-meta {
+  font-size: 12px;
+  color: #6c757d;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.clip-tags {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  background: #e7f3ff;
+  color: #0066cc;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+// ============================================
+// Responsive Design
+// ============================================
+@media (max-width: 1200px) {
+  .video-clip-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+  
+  .category-toolbar {
+    max-width: 50%;
+  }
+}
+
+@media (max-width: 768px) {
+  .search-div {
+    min-width: 200px;
+    
+    &.expanded .animated-search {
+      width: 300px;
+    }
+  }
+  
+  .clips-span {
+    display: none;
+  }
+  
+  .video-clip-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .filters-toolbar {
+    flex-wrap: wrap;
+    padding: 10px;
+  }
+  
+  .category-toolbar {
+    max-width: 100%;
+    order: 3;
+    width: 100%;
+    margin-top: 10px;
+  }
+  
+  .filter-field {
+    margin-top: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .video-clip-gallery {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-button .button-text {
+    display: none;
+  }
+  
+  .search-container {
+    margin-left: 10px;
+  }
+}

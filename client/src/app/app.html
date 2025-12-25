@@ -1,0 +1,134 @@
+<div class="app-container">
+  <!-- Top Toolbar -->
+  <mat-toolbar class="app-toolbar">
+    <button mat-icon-button (click)="drawer.toggle()" class="menu-button">
+      <mat-icon>menu</mat-icon>
+    </button>
+
+    <img src="assets/MediaInsightStart.png" alt="AI-DEMO" class="logo" />
+    <span class="app-title">AI Demo</span>
+
+    <span class="spacer"></span>
+
+    <!-- Right side toolbar items -->
+    <span class="version-info">v0.5.6.1704</span>
+
+    <button mat-icon-button [matMenuTriggerFor]="userMenu" class="user-button">
+      <mat-icon>account_circle</mat-icon>
+      <span class="username">Administrator</span>
+    </button>
+
+    <mat-menu #userMenu="matMenu">
+      <button mat-menu-item>
+        <mat-icon>person</mat-icon>
+        <span>Profile</span>
+      </button>
+      <button mat-menu-item>
+        <mat-icon>settings</mat-icon>
+        <span>Settings</span>
+      </button>
+      <mat-divider></mat-divider>
+      <button mat-menu-item>
+        <mat-icon>logout</mat-icon>
+        <span>Logout</span>
+      </button>
+    </mat-menu>
+  </mat-toolbar>
+
+  <!-- Sidenav Container -->
+  <mat-sidenav-container class="sidenav-container">
+    <!-- Side Navigation -->
+    <mat-sidenav #drawer class="sidenav" mode="side" opened>
+      <mat-nav-list>
+        <!-- Viewer Section -->
+        <div class="nav-section">
+          <div class="nav-section-header">
+            <mat-icon>tv</mat-icon>
+            <span>Viewer</span>
+          </div>
+        </div>
+
+        <!-- AI Media Insight Section -->
+        <div class="nav-section">
+          <div class="nav-section-header" (click)="toggleMediaInsight()">
+            <mat-icon>psychology</mat-icon>
+            <span>AI Media Insight</span>
+            <mat-icon class="expand-icon">
+              {{ mediaInsightExpanded ? 'expand_less' : 'expand_more' }}
+            </mat-icon>
+          </div>
+
+          <div class="nav-subsection" *ngIf="mediaInsightExpanded">
+            <a mat-list-item routerLink="/clips" routerLinkActive="active-link">
+              <mat-icon>video_library</mat-icon>
+              <span>Clips</span>
+            </a>
+
+            <a mat-list-item routerLink="/ai-detections" routerLinkActive="active-link">
+              <mat-icon>search</mat-icon>
+              <span>AI Detections</span>
+            </a>
+
+            <a mat-list-item routerLink="/scheduled-items" routerLinkActive="active-link">
+              <mat-icon>schedule</mat-icon>
+              <span>Scheduled Items</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- OTT StreamWatch Section -->
+        <div class="nav-section">
+          <div class="nav-section-header">
+            <mat-icon>cloud</mat-icon>
+            <span>OTT StreamWatch</span>
+          </div>
+        </div>
+
+        <!-- Multireceiver Section -->
+        <div class="nav-section">
+          <div class="nav-section-header">
+            <mat-icon>devices</mat-icon>
+            <span>Multireceiver</span>
+          </div>
+        </div>
+
+        <!-- Catalog Section -->
+        <div class="nav-section">
+          <div class="nav-section-header">
+            <mat-icon>library_books</mat-icon>
+            <span>Catalog</span>
+          </div>
+        </div>
+
+        <!-- Alert Center Section -->
+        <div class="nav-section">
+          <div class="nav-section-header">
+            <mat-icon>notifications</mat-icon>
+            <span>Alert Center</span>
+          </div>
+        </div>
+
+        <!-- Reports Section -->
+        <div class="nav-section">
+          <div class="nav-section-header">
+            <mat-icon>assessment</mat-icon>
+            <span>Reports</span>
+          </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="nav-section">
+          <div class="nav-section-header">
+            <mat-icon>settings</mat-icon>
+            <span>Settings</span>
+          </div>
+        </div>
+      </mat-nav-list>
+    </mat-sidenav>
+
+    <!-- Main Content -->
+    <mat-sidenav-content class="main-content">
+      <router-outlet></router-outlet>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

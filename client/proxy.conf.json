@@ -1,0 +1,20 @@
+{
+  "/api": {
+    "target": "https://localhost:7176",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/thumbnails": {
+    "target": "https://localhost:7176",
+    "secure": false, 
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/videos": {
+    "target": "https://localhost:7176",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  }
+}

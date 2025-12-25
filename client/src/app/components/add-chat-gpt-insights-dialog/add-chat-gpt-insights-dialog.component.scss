@@ -1,0 +1,70 @@
+::ng-deep .mat-dialog-container {
+  padding: 0px;
+}
+
+.add-insights-dialog {
+  padding: 30px;
+}
+
+.form-field {
+  width: 100%;
+}
+
+.form-field.has-error {
+  color: red;
+}
+
+.buttons-wrapper {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.left-button {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.buttons-container {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.post-run-buttons {
+  display: flex;
+  justify-content: right;
+  margin-top: 20px;
+}
+
+.result-container {
+  height: 150px;
+}
+
+.insight-item {
+  height: 150px;
+  overflow-y: auto;
+}
+
+.has-run {
+  height: auto;
+}
+
+.content-has-run {
+  max-height: none;
+  height: 530px;
+}
+
+.left-button {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.vertical-radio-group mat-radio-button {
+  display: block;
+  margin: 5px 0;
+}
+
+::ng-deep mat-radio-button .mat-radio-label-content {
+  text-decoration: underline;
+}
