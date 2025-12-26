@@ -1,4 +1,5 @@
 using Serilog;
+using WhisperService.Configuration;
 using WhisperService.Controllers;
 using WhisperService.Services;
 
@@ -27,6 +28,7 @@ builder.Services.AddSwaggerGen(c =>
 //builder.Services.AddSingleton<WhisperController>();
 builder.Services.AddSingleton<WhisperSvc>();
 builder.Services.AddSingleton<TranscriptionStateService>();
+builder.Services.Configure<WhisperSettings>(builder.Configuration.GetSection("WhisperSettings"));
 
 builder.Services.AddCors(options =>
 {

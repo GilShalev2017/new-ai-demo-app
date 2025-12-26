@@ -6,6 +6,7 @@ namespace Server.InsightProviders
     {
         InsightTypes InsightType { get; }
 
-        Task<InsightInputData> PrepareInputAsync(Clip clip,InsightRequest request);
+        Task<InsightInputData?> PrepareInputAsync(Clip clip, InsightRequest request);
     }
+
 }

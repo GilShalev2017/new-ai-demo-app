@@ -1,8 +1,10 @@
-﻿using System.Diagnostics;
+﻿using Microsoft.Extensions.Options;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
+using WhisperService.Configuration;
 using WhisperService.Models;
 using WhisperTranscriber.Models;
 
@@ -11,15 +13,16 @@ namespace WhisperService.Services
     public class WhisperSvc
     {
         private readonly ILogger<WhisperSvc> _logger;
-
-        public WhisperSvc(ILogger<WhisperSvc> logger)
+        private readonly WhisperSettings _settings;
+        public WhisperSvc(ILogger<WhisperSvc> logger, IOptions<WhisperSettings> options)
         {
             _logger = logger;
+            _settings = options.Value;
         }
 
         public async Task<(string?, string?)> SaveAudioFileAsync(string audioFileName, HttpRequest Request)
         {
-            string tempDirectory = @"c:\Temp\Whisper\AudioFiles";// _serviceConfiguration!.AudioFilesDirectory!;
+            string tempDirectory = _settings.AudioFilesDirectory; //@"c:\Temp\Whisper\AudioFiles";
 
             string uniqueFolderName = $"{DateTime.Now.ToString("yyyyMMddHHmmssfff")}_{audioFileName.Replace(".", "_")}";
 
@@ -83,11 +86,13 @@ namespace WhisperService.Services
             try
             {
                 // Define the path to the WhisperTranscriber app
-                string transcriberAppPath = @"C:\ACTUS_LIVEU\ai-demo-app\on-premise-providers\WhisperTranscriber\bin\Debug\net9.0\WhisperTranscriber.exe";
+                //string transcriberAppPath = @"C:\ACTUS_LIVEU\new-ai-demo-app\on-premise-providers\WhisperTranscriber\bin\Debug\net9.0\WhisperTranscriber.exe";
+                //string whisperModelsPath = @"C:\temp\Whisper\Models";
+                //string segmentDurationSec = "300";
 
-                string whisperModelsPath = @"C:\temp\Whisper\Models";
-
-                string segmentDurationSec = "300";
+                string transcriberAppPath = _settings.TranscriberAppPath;
+                string whisperModelsPath = _settings.WhisperModelsPath;
+                string segmentDurationSec = _settings.SegmentDurationSec.ToString();
 
                 // Build the arguments to pass to the transcriber app
                 string arguments = $"\"{audioFilePath}\" {whisperModelsPath} {modelType} {segmentDurationSec} {useTranslate} ";
@@ -429,9 +434,13 @@ namespace WhisperService.Services
         public async Task TranscribeTestAsync(string audioFilePath, string modelType = "Base", bool useTranslate = false)
         {
             // Hardcoded file paths and arguments
-            audioFilePath = @"C:\Actus_Temp\AudioFiles\6729d65f3646d8cf1090ed23.mp3";
-            string outputDirectory = @"C:\IntelligenceApps\WhisperOutput"; //from the python virtual environment
-            string whisperLocation = @"C:\Actus_Temp\AudioFiles\whisper-env\Scripts\whisper.exe";
+            //audioFilePath = @"C:\Actus_Temp\AudioFiles\6729d65f3646d8cf1090ed23.mp3";
+            //string outputDirectory = @"C:\IntelligenceApps\WhisperOutput"; //from the python virtual environment
+            //string whisperLocation = @"C:\Actus_Temp\AudioFiles\whisper-env\Scripts\whisper.exe";
+
+            audioFilePath = _settings.TempTestAudioFilePath;
+            string outputDirectory = _settings.TranscriptsOutputDirectory;
+            string whisperLocation = _settings.WhisperExePath;
 
             // Construct the Whisper command arguments with the confirmed options
             string commandArgs = $"\"{audioFilePath}\" --model base --output_dir \"{outputDirectory}\" --device cuda";

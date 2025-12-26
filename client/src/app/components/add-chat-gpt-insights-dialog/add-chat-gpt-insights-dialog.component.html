@@ -210,19 +210,14 @@ For more examples and tips how to write ChatGPT prompts - see the link below"
             <button mat-stroked-button (click)="onClose()" *ngIf="!hasRun" style="height: 34px">
               Close
             </button>
+            <!-- [disabled]="!userDefinedPrompt || (hasRun && !insightProcessingDone) || !isTestEnabled || !insightName" -->
             <button
               mat-stroked-button
               color="primary"
               style="margin-left: 10px; height: 34px"
               (click)="runInsight()"
-              [disabled]="
-                !userDefinedPrompt ||
-                (hasRun && !insightProcessingDone) ||
-                !isTestEnabled ||
-                !insightName
-              "
-              matTooltip="Run your prompt"
-            >
+              
+               matTooltip="Run your prompt">
               <mat-icon>send</mat-icon>
             </button>
           </div>

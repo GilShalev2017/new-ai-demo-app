@@ -158,6 +158,8 @@ export interface CreateClipRequest {
 
 export interface InsightRequest {
   insightType: InsightType;
+  PromptText?: string;
+  PromptName?:string;
   language?: string;
   config?: any;
 }
@@ -171,7 +173,8 @@ export enum InsightType {
   Locations = 'Locations',
   ObjectDetection = 'ObjectDetection',
   ALPR = 'ALPR',
-  Sentiment = 'Sentiment'
+  Sentiment = 'Sentiment',
+  ChatGPTPrompt = 'ChatGPTPrompt'
 }
 
 export interface InsightTypeOption {

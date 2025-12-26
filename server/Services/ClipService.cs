@@ -30,22 +30,40 @@ namespace Server.Services
         private readonly IVideoUtilityService _videoUtilityService;
         private readonly ILogger<ClipService> _logger;
         private readonly IAIProviderService _aiProviderService;
-        private readonly IInsightHandlerFactory _insightHandlerFactory;
+        private readonly IInsightInputBuilder _inputBuilder;
+        private readonly IInsightDefinitionRepository _definitionRepo;
+        private readonly IEnumerable<IInsightInputBuilder> _inputBuilders;
+        //private readonly IInsightHandlerFactory _insightHandlerFactory;
 
+        //public ClipService(
+        //    IClipRepository clipRepository,
+        //    IClipRequestRepository clipRequestRepository,
+        //   // IInsightHandlerFactory insightHandlerFactory,
+        //    IVideoUtilityService videoUtility,
+        //    IAIProviderService aiProviderService,
+        //    IInsightInputBuilder inputBuilder,
+        //    IInsightDefinitionRepository definitionRepo,
+        //    ILogger<ClipService> logger)
+        //{
+        //    _clipRepository = clipRepository;
+        //    _clipRequestRepository = clipRequestRepository;
+        //    _videoUtilityService = videoUtility;
+        //    _logger = logger;
+        //    _aiProviderService = aiProviderService;
+        //    _inputBuilder = inputBuilder;
+        //    _definitionRepo = definitionRepo;
+        //    //_insightHandlerFactory = insightHandlerFactory;
+        //}
         public ClipService(
-            IClipRepository clipRepository,
-            IClipRequestRepository clipRequestRepository,
-            IInsightHandlerFactory insightHandlerFactory,
-            IVideoUtilityService videoUtility,
-            IAIProviderService aiProviderService,
-            ILogger<ClipService> logger)
+                IEnumerable<IInsightInputBuilder> inputBuilders,
+                IAIProviderService aiProviderService,
+                IInsightDefinitionRepository definitionRepo,
+                IClipRepository clipRepository)
         {
-            _clipRepository = clipRepository;
-            _clipRequestRepository = clipRequestRepository;
-            _videoUtilityService = videoUtility;
-            _logger = logger;
+            _inputBuilders = inputBuilders;
             _aiProviderService = aiProviderService;
-            _insightHandlerFactory = insightHandlerFactory;
+            _definitionRepo = definitionRepo;
+            _clipRepository = clipRepository;
         }
 
         public async Task<ClipSearchResponse> SearchClipsAsync(ClipSearchRequest request)
@@ -121,7 +139,38 @@ namespace Server.Services
             return await _clipRepository.DeleteMultipleAsync(ids);
         }
 
-        public async Task<Clip> AddInsightsToClipAsync(Clip clip,List<InsightRequest> requests)
+        //public async Task<Clip> AddInsightsToClipAsync(Clip clip,List<InsightRequest> requests)
+        //{
+        //    foreach (var request in requests)
+        //    {
+        //        var provider = _aiProviderService.GetProviderForRequest(request);
+        //        if (provider == null)
+        //            continue;
+
+        //        var handler = _insightHandlerFactory.GetHandler(request.InsightType);
+        //        if (handler == null)
+        //            continue;
+
+        //        // 1. Prepare input (polymorphic)
+        //        var inputData = await handler.PrepareInputAsync(clip, request);
+        //        if (inputData == null)
+        //            continue;
+
+        //        // 2. Execute insight
+        //        var insight = await provider.ProcessAsync(inputData, request);
+
+        //        insight.Id ??= ObjectId.GenerateNewId().ToString();
+
+        //        // 3. Attach to aggregate (encapsulated)
+        //        clip.AddOrReplaceInsight(insight);
+        //    }
+
+        //    // 4. Persist once
+        //    await _clipRepository.UpdateAsync(clip.Id, clip);
+
+        //    return clip;
+        //}
+        public async Task<Clip> AddInsightsToClipAsync(Clip clip, List<InsightRequest> requests)
         {
             foreach (var request in requests)
             {
@@ -129,29 +178,35 @@ namespace Server.Services
                 if (provider == null)
                     continue;
 
-                var handler = _insightHandlerFactory.GetHandler(request.InsightType);
-                if (handler == null)
+                // 🔹 Pick the right input builder
+                var builder = _inputBuilders.FirstOrDefault(b => b.CanBuild(request));
+                if (builder == null)
                     continue;
 
-                // 1. Prepare input (polymorphic)
-                var inputData = await handler.PrepareInputAsync(clip, request);
-                if (inputData == null)
+                var input = await builder.BuildAsync(clip, request);
+                if (input == null)
                     continue;
 
-                // 2. Execute insight
-                var insight = await provider.ProcessAsync(inputData, request);
+                // 🔹 Enrich ChatGPT prompt from definition (optional)
+                if (request.InsightType == InsightTypes.ChatGPTPrompt &&
+                    request.PromptText == null )//&&
+                    //request.PromptName != null)
+                {
+                    var def = await _definitionRepo.GetByNameAsync(request.PromptName);
+                    if (def != null)
+                        request.PromptText = def.PromptTemplate;
+                }
+
+                var insight = await provider.ProcessAsync(input, request);
 
                 insight.Id ??= ObjectId.GenerateNewId().ToString();
-
-                // 3. Attach to aggregate (encapsulated)
                 clip.AddOrReplaceInsight(insight);
             }
 
-            // 4. Persist once
             await _clipRepository.UpdateAsync(clip.Id, clip);
-
             return clip;
         }
+
 
         public async Task<Clip> RemoveInsightsAsync(Clip clip, List<string> insightIdsToDelete)
         {

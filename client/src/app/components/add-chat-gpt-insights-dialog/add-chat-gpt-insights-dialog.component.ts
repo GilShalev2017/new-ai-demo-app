@@ -1,5 +1,5 @@
 import { Component, Inject, TemplateRef, ViewChild } from '@angular/core';
-import { Clip } from '../../models/models';
+import { Clip, InsightRequest, InsightType } from '../../models/models';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -16,6 +16,7 @@ import {
 } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import { SnackbarService } from '../../services/snackbar-service';
+import { ClipService } from '../../services/clip.service';
 
 export interface DialogData {
   existingInsights: string[];
@@ -56,12 +57,14 @@ export class AddChatGptInsightsDialogComponent {
 
   @ViewChild('dialogTemplate') dialogTemplate: TemplateRef<any> | undefined;
   helpDialogRef?: MatDialogRef<any>;
+  snackBar: any;
 
   constructor(
     public dialogRef: MatDialogRef<AddChatGptInsightsDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DialogData,
     private dialog: MatDialog,
-    private snackbar: SnackbarService
+    private snackbar: SnackbarService,
+    private clipService: ClipService
   ) {}
 
   onSelectionChange($event: MatSelectChange) {
@@ -89,10 +92,44 @@ export class AddChatGptInsightsDialogComponent {
   }
 
   onClose() {
-    throw new Error('Method not implemented.');
+    this.dialogRef.close();
   }
 
   runInsight() {
+    const chatGptInsight: InsightRequest = { insightType: InsightType.ChatGPTPrompt,PromptText:this.userDefinedPrompt };
+    if (this.data.aiClip != null) {
+      this.clipService.addInsights(this.data.aiClip.id!, [chatGptInsight]).subscribe({
+        next: () => {
+          // Reload clip after backend had time to finish
+          setTimeout(() => {
+            if (this.data.aiClip!.id!) {
+              this.loadClip(this.clipId);
+            }
+
+            // ✅ stop spinners
+            //this.clearInsightsProcessing(insights);
+          }, 2000);
+        },
+        error: (error) => {
+          console.error('Error adding insights:', error);
+
+          // ❌ stop spinners on error
+          //this.clearInsightsProcessing(insights);
+
+          this.snackBar.open('Failed to add insights. Please try again.', 'Close', {
+            duration: 4000,
+          });
+        },
+      });
+    }
+  }
+  loadClip(clipId: any) {
+    throw new Error('Method not implemented.');
+  }
+  clipId(clipId: any) {
+    throw new Error('Method not implemented.');
+  }
+  clearInsightsProcessing(insights: any) {
     throw new Error('Method not implemented.');
   }
   saveInsight() {

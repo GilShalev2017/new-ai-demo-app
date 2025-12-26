@@ -57,15 +57,16 @@ builder.Services.AddSingleton(serviceProvider =>
 builder.Services.AddSingleton<IVideoUtilityService, VideoUtilityService>();
 builder.Services.AddSingleton<IClipRepository, ClipRepository>();
 builder.Services.AddSingleton<IClipRequestRepository, ClipRequestRepository>();
+builder.Services.AddScoped<IInsightDefinitionRepository, InsightDefinitionRepository>();
 builder.Services.AddScoped<IClipService, ClipService>();
 builder.Services.AddSingleton<DataSeederService>();
 builder.Services.AddScoped<ProviderBase, WhisperTranscriberProvider>();
 builder.Services.AddScoped<ProviderBase, OpenAIChatProvider>();
 builder.Services.AddScoped<IAIProviderService, AIProviderService>();
 
-builder.Services.AddScoped<IInsightHandler, TranscriptionInsightHandler>();
-builder.Services.AddScoped<IInsightHandler, SummaryInsightHandler>();
-builder.Services.AddScoped<IInsightHandlerFactory, InsightHandlerFactory>();
+builder.Services.AddScoped<IInsightInputBuilder, TranscriptionInputBuilder>();
+builder.Services.AddScoped<IInsightInputBuilder, TranscriptionInputBuilder>();
+builder.Services.AddScoped<IInsightInputBuilder, TranscriptionDependentInputBuilder>();
 
 // Configure CORS
 builder.Services.AddCors(options =>
