@@ -5,7 +5,7 @@
   <h2 mat-dialog-title>
     {{ data.isUserDefined ? 'Run your own ChatGPT prompt' : 'Add clip insights' }}
   </h2>
-  <mat-dialog-content [ngClass]="{ 'content-has-run': hasRun }">
+  <mat-dialog-content [ngClass]="{ 'content-has-run': hasRun }" style="padding-top: 5px">
     <div>
       <ng-container *ngIf="!data.isUserDefined; else userDefinedInsight">
         <mat-form-field appearance="outline" class="form-field">
@@ -52,8 +52,8 @@
             (input)="
               userDefinedPrompt = this.capitalizeFirstLetter($event); onPromptChanged($event)
             "
-            [disabled]="hasRun && !insightProcessingDone"
-            [rows]="9"
+            [disabled]="insightProcessing"
+            [rows]="4"
             placeholder="Here are some examples:
 
 Summarization: 'Summarize the main events from the text.',
@@ -172,17 +172,20 @@ For more examples and tips how to write ChatGPT prompts - see the link below"
               </p>
             </mat-dialog-content>
             <mat-dialog-actions>
-              <button mat-stroked-button mat-dialog-close (click)="onCloseHelpDialog()">Close</button>
+              <button mat-stroked-button mat-dialog-close (click)="onCloseHelpDialog()">
+                Close
+              </button>
             </mat-dialog-actions>
           </div>
         </ng-template>
 
         <div class="buttons-wrapper">
           <div class="left-button">
-            <mat-radio-group
+            <!-- <mat-radio-group
               aria-label="Select an option"
               [(ngModel)]="queryType"
-              style="display: flex">
+              style="display: flex"
+            >
               <span style="margin-right: 5px">Run with a</span>
               <div style="display: flex; align-items: center; text-decoration-line: underline">
                 <mat-radio-button
@@ -201,7 +204,7 @@ For more examples and tips how to write ChatGPT prompts - see the link below"
                   timestamped transcription
                 </mat-radio-button>
               </div>
-            </mat-radio-group>
+            </mat-radio-group> -->
             <a href="#" (click)="$event.preventDefault(); openPromptInfoDialog()"
               >How to write ChatGPT prompts</a
             >
@@ -216,26 +219,34 @@ For more examples and tips how to write ChatGPT prompts - see the link below"
               color="primary"
               style="margin-left: 10px; height: 34px"
               (click)="runInsight()"
-              
-               matTooltip="Run your prompt">
+              matTooltip="Run your prompt"
+              [disabled]="insightProcessing || !userDefinedPrompt"
+            >
               <mat-icon>send</mat-icon>
             </button>
           </div>
         </div>
-        <div class="result-container" *ngIf="hasRun" style="margin-top: 20px">
-          <!-- <app-insight
-            [aiClip]="data.aiClip"
-            [title]="insightName"
-            [showTitle]="false"
-            [insightTypeString]="insightName"
-            [showChart]="false"
-            [translationSupport]="false"
-            [isMaximizeDisabled]="true"
-            [isDeleteDisabled]="true"
-            [showPromptSupport]="false"
-            class="insight-item"
+        <div class="result-container" *ngIf="hasRun" style="margin-top: 20px;max-height: 100px;">
+          <!-- Spinner while processing -->
+          <div *ngIf="insightProcessing" style="text-align: center; margin: 20px 0">
+            <mat-progress-spinner mode="indeterminate" diameter="40"></mat-progress-spinner>
+            <p>Processing your prompt...</p>
+          </div>
+
+          <!-- Result panel -->
+          <div
+            *ngIf="insightProcessingDone && insightResult"
+            style="
+              border: 1px solid #ccc;
+              border-radius: 8px;
+              padding: 16px;
+              background: #f9f9f9;
+              margin-top: 20px;
+            "
           >
-          </app-insight> -->
+            <h3>ChatGPT Result:</h3>
+            <p style="white-space: pre-wrap; ">{{ insightResult.result }}</p>
+          </div>
 
           <div class="post-run-buttons" *ngIf="hasRun" style="display: flex; align-items: center">
             <div style="display: flex; align-items: center">

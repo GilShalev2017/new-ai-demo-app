@@ -1,22 +1,12 @@
-import { Component, Inject, TemplateRef, ViewChild } from '@angular/core';
-import { Clip, InsightRequest, InsightType } from '../../models/models';
+import { ChangeDetectorRef, Component, Inject, TemplateRef, ViewChild } from '@angular/core';
+import { Clip, Insight, InsightRequest, InsightType, ChatGptInsight } from '../../models/models';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatButtonModule } from '@angular/material/button';
 import { MatSelect, MatSelectChange, MatOption } from '@angular/material/select';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import {
-  MatDialogContent,
-  MatDialogActions,
-  MAT_DIALOG_DATA,
-  MatDialogRef,
-  MatDialog,
-} from '@angular/material/dialog';
-import { MatIcon } from '@angular/material/icon';
+import { MAT_DIALOG_DATA, MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { SnackbarService } from '../../services/snackbar-service';
 import { ClipService } from '../../services/clip.service';
+import { MaterialModule } from '../../shared/material.module';
 
 export interface DialogData {
   existingInsights: string[];
@@ -26,19 +16,7 @@ export interface DialogData {
 
 @Component({
   selector: 'app-add-chat-gpt-insights-dialog.component',
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatSelect,
-    MatOption,
-    MatTooltipModule,
-    MatDialogContent,
-    MatDialogActions,
-    MatIcon,
-  ],
+  imports: [CommonModule, FormsModule, MaterialModule],
   templateUrl: './add-chat-gpt-insights-dialog.component.html',
   styleUrl: './add-chat-gpt-insights-dialog.component.scss',
 })
@@ -46,8 +24,7 @@ export class AddChatGptInsightsDialogComponent {
   hasRun: any;
   selectedInsights: any;
   selectedLanguages: any;
-  userDefinedPrompt: any;
-  insightProcessingDone: any;
+
   queryType: any;
   isTestEnabled: any;
   insightName: any;
@@ -59,12 +36,18 @@ export class AddChatGptInsightsDialogComponent {
   helpDialogRef?: MatDialogRef<any>;
   snackBar: any;
 
+  insightResult: ChatGptInsight | null = null; // <-- store the result to show
+  insightProcessing = false;
+  insightProcessingDone = false;
+  userDefinedPrompt = '';
+
   constructor(
     public dialogRef: MatDialogRef<AddChatGptInsightsDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DialogData,
     private dialog: MatDialog,
     private snackbar: SnackbarService,
-    private clipService: ClipService
+    private clipService: ClipService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   onSelectionChange($event: MatSelectChange) {
@@ -96,33 +79,40 @@ export class AddChatGptInsightsDialogComponent {
   }
 
   runInsight() {
-    const chatGptInsight: InsightRequest = { insightType: InsightType.ChatGPTPrompt,PromptText:this.userDefinedPrompt };
-    if (this.data.aiClip != null) {
-      this.clipService.addInsights(this.data.aiClip.id!, [chatGptInsight]).subscribe({
-        next: () => {
-          // Reload clip after backend had time to finish
-          setTimeout(() => {
-            if (this.data.aiClip!.id!) {
-              this.loadClip(this.clipId);
-            }
+    if (!this.data.aiClip || !this.userDefinedPrompt) return;
 
-            // ✅ stop spinners
-            //this.clearInsightsProcessing(insights);
-          }, 2000);
-        },
-        error: (error) => {
-          console.error('Error adding insights:', error);
+    this.hasRun = true;
+    this.insightProcessing = true;
+    this.insightProcessingDone = false;
+    this.insightResult = null;
 
-          // ❌ stop spinners on error
-          //this.clearInsightsProcessing(insights);
+    const chatGptInsight: InsightRequest = {
+      insightType: InsightType.ChatGPTPrompt,
+      PromptText: this.userDefinedPrompt,
+    };
 
-          this.snackBar.open('Failed to add insights. Please try again.', 'Close', {
-            duration: 4000,
-          });
-        },
-      });
-    }
+    this.clipService.addInsights(this.data.aiClip.id!, [chatGptInsight]).subscribe({
+      next: (updatedClip) => {
+        // Find the new insight
+        const newInsight = updatedClip.insights?.find(
+          (i) =>
+            i.insightType === InsightType.ChatGPTPrompt && i.promptText === this.userDefinedPrompt // match the prompt text you sent
+        );
+        if (newInsight && 'result' in newInsight) {
+          this.insightResult = newInsight as ChatGptInsight;
+        }
+        this.insightProcessing = false;
+        this.insightProcessingDone = true;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.insightProcessing = false;
+        this.insightProcessingDone = false;
+        this.snackBar.open('Failed to add insight. Please try again.', 'Close', { duration: 4000 });
+      },
+    });
   }
+
   loadClip(clipId: any) {
     throw new Error('Method not implemented.');
   }
@@ -139,7 +129,7 @@ export class AddChatGptInsightsDialogComponent {
     throw new Error('Method not implemented.');
   }
   onCloseAddNewPrompt() {
-    throw new Error('Method not implemented.');
+     this.dialogRef.close();
   }
   onAddInsights() {
     throw new Error('Method not implemented.');

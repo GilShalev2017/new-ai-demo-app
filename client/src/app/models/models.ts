@@ -67,12 +67,20 @@ export interface LocationInsight extends BaseInsight {
   locations: any[];
 }
 
+export interface ChatGptInsight extends BaseInsight {
+  promptText: string;
+  insightType: InsightType.ChatGPTPrompt;
+  name: string;
+  prompt: string;
+  result: string;
+}
+
 export type Insight =
   | TranscriptionInsight
   | SummaryInsight
   | CelebrityInsight
-  | LocationInsight;
-
+  | LocationInsight
+  | ChatGptInsight;
 
 export interface ClipTag {
   text: string;

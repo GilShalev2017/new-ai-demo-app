@@ -178,7 +178,13 @@ export class ClipService {
     return this.http.put<void>(`${this.clipsApi}/${clipId}/removeinsights`, insightIds);
   }
 
-  addInsights(clipId: string, insights: InsightRequest[]): Observable<void> {
-    return this.http.put<void>(`${this.clipsApi}/${clipId}/addinsights`, insights);
+  addInsights(clipId: string, insights: InsightRequest[]): Observable<Clip> {
+    return this.http.put<Clip>(`${this.clipsApi}/${clipId}/addinsights`, insights).pipe(
+      map(clip => ({
+        ...clip,
+        createdAt: new Date(clip.createdAt),
+        updatedAt: new Date(clip.updatedAt)
+      }))
+    );
   }
 }
