@@ -142,5 +142,20 @@ namespace Server.Controllers
 
             return Ok(updatedClip);
         }
+        
+        [HttpPost("ingest-folder")]
+        public async Task<IActionResult> IngestFolder([FromBody] FolderIngestionRequestDto request)
+        {
+            if (string.IsNullOrWhiteSpace(request.RootFolderPath))
+                return BadRequest(new { message = "RootFolderPath is required" });
+
+            var result = await _clipService.IngestFolderAsync(request);
+            // For now, just return OK. Implementation will scan folders,
+            // generate thumbnails, and create MongoDB clip documents.
+            // Later this will call a service method, e.g., _clipService.IngestFolderAsync(request)
+
+            return Ok(new { message = $"Folder ingestion initiated for: {request.RootFolderPath}" });
+        }
+
     }
 }

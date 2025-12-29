@@ -1,12 +1,16 @@
-﻿using Microsoft.Extensions.Options;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Server.DTOs;
 using Server.InsightProviders;
 using Server.Models;
 using Server.Repositories;
+using Server.Services;
 using Server.Settings;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 
 namespace Server.Services
@@ -21,6 +25,7 @@ namespace Server.Services
         Task<int> DeleteMultipleAsync(List<string> ids);
         Task<Clip> AddInsightsToClipAsync(Clip clip, List <InsightRequest> requests);
         Task<Clip> RemoveInsightsAsync(Clip clip, List<string> insightIdsToDelete);
+        Task<FolderIngestionResultDto> IngestFolderAsync(FolderIngestionRequestDto request);
     }
 
     public class ClipService : IClipService
@@ -33,37 +38,24 @@ namespace Server.Services
         private readonly IInsightInputBuilder _inputBuilder;
         private readonly IInsightDefinitionRepository _definitionRepo;
         private readonly IEnumerable<IInsightInputBuilder> _inputBuilders;
-        //private readonly IInsightHandlerFactory _insightHandlerFactory;
+        private readonly string _videoOutputPath = "";
+        private readonly string _thumbnailOutputPath = "";
 
-        //public ClipService(
-        //    IClipRepository clipRepository,
-        //    IClipRequestRepository clipRequestRepository,
-        //   // IInsightHandlerFactory insightHandlerFactory,
-        //    IVideoUtilityService videoUtility,
-        //    IAIProviderService aiProviderService,
-        //    IInsightInputBuilder inputBuilder,
-        //    IInsightDefinitionRepository definitionRepo,
-        //    ILogger<ClipService> logger)
-        //{
-        //    _clipRepository = clipRepository;
-        //    _clipRequestRepository = clipRequestRepository;
-        //    _videoUtilityService = videoUtility;
-        //    _logger = logger;
-        //    _aiProviderService = aiProviderService;
-        //    _inputBuilder = inputBuilder;
-        //    _definitionRepo = definitionRepo;
-        //    //_insightHandlerFactory = insightHandlerFactory;
-        //}
         public ClipService(
                 IEnumerable<IInsightInputBuilder> inputBuilders,
                 IAIProviderService aiProviderService,
                 IInsightDefinitionRepository definitionRepo,
-                IClipRepository clipRepository)
+                IClipRepository clipRepository,
+                IConfiguration configuration,
+                IVideoUtilityService videoUtilityService)
         {
             _inputBuilders = inputBuilders;
             _aiProviderService = aiProviderService;
             _definitionRepo = definitionRepo;
             _clipRepository = clipRepository;
+            _videoUtilityService = videoUtilityService;
+            _videoOutputPath = configuration["Paths:Videos"] ?? @"C:\ACTUS_LIVEU\new-ai-demo-app\server\wwwroot\videos";
+            _thumbnailOutputPath = configuration["Paths:Thumbnails"] ?? @"C:\ACTUS_LIVEU\new-ai-demo-app\server\wwwroot\thumbnails";
         }
 
         public async Task<ClipSearchResponse> SearchClipsAsync(ClipSearchRequest request)
@@ -222,6 +214,93 @@ namespace Server.Services
             await _clipRepository.UpdateAsync(clip.Id, clip);
 
             return clip;
+        }
+
+        public async Task<FolderIngestionResultDto> IngestFolderAsync(FolderIngestionRequestDto request)
+        {
+            var result = new FolderIngestionResultDto();
+
+            try
+            {
+                if (!Directory.Exists(request.RootFolderPath))
+                {
+                    result.Errors.Add($"Root folder not found: {request.RootFolderPath}");
+                    return result;
+                }
+
+                var channelDirs = Directory.GetDirectories(request.RootFolderPath);
+
+                foreach (var channelDir in channelDirs)
+                {
+                    var channelName = Path.GetFileName(channelDir);
+                    var videoFiles = Directory.GetFiles(channelDir, "*.mp4");
+
+                    // Optional: filter by FromDate
+                    if (request.FromDate.HasValue)
+                    {
+                        videoFiles = videoFiles
+                            .Where(f =>
+                            {
+                                var creation = File.GetCreationTime(f);
+                                return creation >= request.FromDate.Value;
+                            })
+                            .ToArray();
+                    }
+
+                    int clipsAdded = 0;
+                    foreach (var filePath in videoFiles)
+                    {
+                        if (request.MaxClipsPerChannel > 0 && clipsAdded >= request.MaxClipsPerChannel)
+                            break;
+
+                        try
+                        {
+                            var fileName = Path.GetFileName(filePath);
+
+                            // Copy video file to wwwroot/videos
+                            var videoDestFolder = Path.Combine(_videoUtilityService.GetFilePathFromUrl("/videos"), channelName);
+                            Directory.CreateDirectory(videoDestFolder);
+                            var videoDest = Path.Combine(videoDestFolder, fileName);
+                            File.Copy(filePath, videoDest, true);
+
+                            // Generate thumbnail via VideoUtilityService
+                            var thumbFileName = Path.GetFileNameWithoutExtension(fileName) + ".jpg";
+                            var thumbUrl = await _videoUtilityService.GenerateThumbnailAsync(fileName, thumbFileName);
+
+                            // Create Clip object
+                            var clip = new Clip
+                            {
+                                Id = Guid.NewGuid().ToString(),
+                                Title = Path.GetFileNameWithoutExtension(fileName),
+                                ChannelId = channelName,
+                                CreatedAt = File.GetCreationTime(filePath),
+                                VideoUrl = _videoUtilityService.GetVideoUrl(fileName),
+                                ThumbnailUrl = thumbUrl,
+                                Duration = _videoUtilityService.GetVideoDuration(fileName),
+                                FileSize = _videoUtilityService.GetFileSize(fileName)
+                            };
+
+                            await _clipRepository.CreateAsync(clip);
+
+                            clipsAdded++;
+                            result.TotalFilesProcessed++;
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, $"Error processing file {filePath}");
+                            result.Errors.Add($"File: {filePath} -> {ex.Message}");
+                            result.FilesSkipped++;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error ingesting folder");
+                result.Errors.Add(ex.Message);
+            }
+
+            return result;
         }
     }
 }
