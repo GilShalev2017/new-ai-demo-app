@@ -8,9 +8,9 @@ namespace Server.Services
     {
         int GetVideoDuration(string videoPath);
         long GetFileSize(string videoPath);
-        Task<string> GenerateThumbnailAsync(string videoPath, string outputPath);
-        string GetVideoUrl(string fileName);
-        string GetThumbnailUrl(string fileName);
+        Task<string> GenerateThumbnailAsync(string channelName, string videoFileName, string outputFileName);
+        string GetVideoUrl(string channelName, string fileName);
+        string GetThumbnailUrl(string channelName, string fileName);
         Task<string> ConvertMp4ToMp3Async(string mp4Path);
         string GetFilePathFromUrl(string url);
     }
@@ -56,15 +56,17 @@ namespace Server.Services
             });
         }
 
-        public string GetVideoUrl(string fileName)
+        public string GetVideoUrl(string channel, string fileName)
         {
-            return $"/videos/{fileName}";
+            // Channel folder + filename
+            return $"/videos/{channel}/{fileName}";
         }
 
-        public string GetThumbnailUrl(string fileName)
+        public string GetThumbnailUrl(string channel, string fileName)
         {
+            // Thumbnail keeps same folder structure as video
             var thumbnailName = Path.GetFileNameWithoutExtension(fileName) + ".jpg";
-            return $"/thumbnails/{thumbnailName}";
+            return $"/thumbnails/{channel}/{thumbnailName}";
         }
 
         public int GetVideoDuration(string videoPath)
@@ -78,7 +80,7 @@ namespace Server.Services
                 // Using FFmpeg to get duration
                 var startInfo = new ProcessStartInfo
                 {
-                    FileName = _ffmpegPath,//"ffmpeg",
+                    FileName = _ffmpegPath,
                     Arguments = $"-i \"{fullPath}\"",
                     RedirectStandardError = true,
                     UseShellExecute = false,
@@ -129,12 +131,12 @@ namespace Server.Services
             }
         }
 
-        public async Task<string> GenerateThumbnailAsync(string videoFileName, string outputFileName)
+        public async Task<string> GenerateThumbnailAsync(string channelName, string videoFileName, string outputFileName)
         {
             try
             {
-                var videoPath = Path.Combine(_videosFolder, videoFileName);
-                var thumbnailPath = Path.Combine(_thumbnailsFolder, outputFileName);
+                var videoPath = Path.Combine(_videosFolder, channelName, videoFileName);
+                var thumbnailPath = Path.Combine(_thumbnailsFolder, channelName, outputFileName);
 
                 if (!File.Exists(videoPath))
                 {
@@ -142,9 +144,11 @@ namespace Server.Services
                     return string.Empty;
                 }
 
+                Directory.CreateDirectory(Path.GetDirectoryName(thumbnailPath)!);
+
                 var startInfo = new ProcessStartInfo
                 {
-                    FileName = "ffmpeg",
+                    FileName = _ffmpegPath,
                     Arguments = $"-i \"{videoPath}\" -ss 00:00:01 -vframes 1 \"{thumbnailPath}\" -y",
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -152,11 +156,17 @@ namespace Server.Services
                     CreateNoWindow = true
                 };
 
-                using var process = Process.Start(startInfo);
-                await process!.WaitForExitAsync();
+                using var process = new Process { StartInfo = startInfo, EnableRaisingEvents = true };
+                process.Start();
+
+                // Read output/error streams asynchronously
+                var stdOutTask = process.StandardOutput.ReadToEndAsync();
+                var stdErrTask = process.StandardError.ReadToEndAsync();
+
+                await Task.WhenAll(stdOutTask, stdErrTask, process.WaitForExitAsync());
 
                 return File.Exists(thumbnailPath)
-                    ? GetThumbnailUrl(outputFileName)
+                    ? GetThumbnailUrl(channelName, outputFileName) // pass channelName too
                     : string.Empty;
             }
             catch (Exception ex)

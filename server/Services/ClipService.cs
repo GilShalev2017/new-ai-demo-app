@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Text.RegularExpressions;
 
 namespace Server.Services
 {
@@ -81,8 +82,8 @@ namespace Server.Services
                 Title = dto.Title,
                 ChannelId = dto.ChannelIds.First(),
                 ChannelName = dto.ChannelName ?? "Default Channel",
-                VideoUrl = _videoUtilityService.GetVideoUrl(videoFileName),
-                ThumbnailUrl = _videoUtilityService.GetThumbnailUrl(videoFileName),
+                VideoUrl = _videoUtilityService.GetVideoUrl(dto.ChannelName!, videoFileName),
+                ThumbnailUrl = _videoUtilityService.GetThumbnailUrl(dto.ChannelName!,videoFileName),
                 Duration = _videoUtilityService.GetVideoDuration(videoFileName),
                 FileSize = _videoUtilityService.GetFileSize(videoFileName),
                 Tags = dto.Tags ?? new List<string>(),
@@ -216,6 +217,15 @@ namespace Server.Services
             return clip;
         }
 
+        string ShortenFileName(string originalName, string channel)
+        {
+            var words = Path.GetFileNameWithoutExtension(originalName)
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .Take(6)
+                .Select(w => Regex.Replace(w, @"[^\w\d]", "_")); // remove invalid chars
+
+            return $"{string.Join("_", words)}_{channel}.mp4";
+        }
         public async Task<FolderIngestionResultDto> IngestFolderAsync(FolderIngestionRequestDto request)
         {
             var result = new FolderIngestionResultDto();
@@ -239,11 +249,7 @@ namespace Server.Services
                     if (request.FromDate.HasValue)
                     {
                         videoFiles = videoFiles
-                            .Where(f =>
-                            {
-                                var creation = File.GetCreationTime(f);
-                                return creation >= request.FromDate.Value;
-                            })
+                            .Where(f => File.GetCreationTime(f) >= request.FromDate.Value)
                             .ToArray();
                     }
 
@@ -255,29 +261,38 @@ namespace Server.Services
 
                         try
                         {
-                            var fileName = Path.GetFileName(filePath);
+                            var originalFileName = Path.GetFileName(filePath);
+                            var fileDate = File.GetCreationTime(filePath);
 
-                            // Copy video file to wwwroot/videos
+                            var shortenedFileName = ShortenFileName(originalFileName, channelName);
+
+                            // --- Copy video file to wwwroot/videos/channelName ---
                             var videoDestFolder = Path.Combine(_videoUtilityService.GetFilePathFromUrl("/videos"), channelName);
                             Directory.CreateDirectory(videoDestFolder);
-                            var videoDest = Path.Combine(videoDestFolder, fileName);
-                            File.Copy(filePath, videoDest, true);
+                            var videoDestPath = Path.Combine(videoDestFolder, shortenedFileName);
+                            File.Copy(filePath, videoDestPath, true);
 
-                            // Generate thumbnail via VideoUtilityService
-                            var thumbFileName = Path.GetFileNameWithoutExtension(fileName) + ".jpg";
-                            var thumbUrl = await _videoUtilityService.GenerateThumbnailAsync(fileName, thumbFileName);
+                            // --- Generate thumbnail ---
+                            var thumbFileName = Path.GetFileNameWithoutExtension(shortenedFileName) + ".jpg";
+                            var thumbDestFolder = Path.Combine(_videoUtilityService.GetFilePathFromUrl("/thumbnails"), channelName);
+                            Directory.CreateDirectory(thumbDestFolder);
+                            var thumbUrl = await _videoUtilityService.GenerateThumbnailAsync(
+     channelName,
+     shortenedFileName,
+     thumbFileName
+ );
 
-                            // Create Clip object
+                            // --- Create Clip object ---
                             var clip = new Clip
                             {
-                                Id = Guid.NewGuid().ToString(),
-                                Title = Path.GetFileNameWithoutExtension(fileName),
-                                ChannelId = channelName,
-                                CreatedAt = File.GetCreationTime(filePath),
-                                VideoUrl = _videoUtilityService.GetVideoUrl(fileName),
-                                ThumbnailUrl = thumbUrl,
-                                Duration = _videoUtilityService.GetVideoDuration(fileName),
-                                FileSize = _videoUtilityService.GetFileSize(fileName)
+                                Title = Path.GetFileNameWithoutExtension(shortenedFileName),
+                                ChannelName = channelName,
+                                ChannelId = channelName.ToLowerInvariant(),
+                                CreatedAt = fileDate,
+                                VideoUrl = _videoUtilityService.GetVideoUrl(channelName, shortenedFileName),
+                                ThumbnailUrl = _videoUtilityService.GetThumbnailUrl(channelName, shortenedFileName),
+                                Duration = _videoUtilityService.GetVideoDuration(Path.Combine(channelName, shortenedFileName)),
+                                FileSize = _videoUtilityService.GetFileSize(Path.Combine(channelName, shortenedFileName))
                             };
 
                             await _clipRepository.CreateAsync(clip);

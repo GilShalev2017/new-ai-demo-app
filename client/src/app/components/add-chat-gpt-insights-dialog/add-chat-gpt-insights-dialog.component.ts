@@ -7,6 +7,7 @@ import { MAT_DIALOG_DATA, MatDialogRef, MatDialog } from '@angular/material/dial
 import { SnackbarService } from '../../services/snackbar-service';
 import { ClipService } from '../../services/clip.service';
 import { MaterialModule } from '../../shared/material.module';
+import { marked } from 'marked';
 
 export interface DialogData {
   existingInsights: string[];
@@ -129,9 +130,13 @@ export class AddChatGptInsightsDialogComponent {
     throw new Error('Method not implemented.');
   }
   onCloseAddNewPrompt() {
-     this.dialogRef.close();
+    this.dialogRef.close();
   }
   onAddInsights() {
     throw new Error('Method not implemented.');
+  }
+  convertMdToHtml(insightContent: string) {
+    const html = marked.parse(insightContent);
+    return html;
   }
 }
