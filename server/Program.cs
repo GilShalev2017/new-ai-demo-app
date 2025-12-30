@@ -54,6 +54,7 @@ builder.Services.AddSingleton(serviceProvider =>
     return client.GetDatabase(settings?.DatabaseName);
 });
 
+builder.Services.AddScoped<IVectorDBRepository, VectorDBRepository>();
 builder.Services.AddSingleton<IVideoUtilityService, VideoUtilityService>();
 builder.Services.AddSingleton<IClipRepository, ClipRepository>();
 builder.Services.AddSingleton<IClipRequestRepository, ClipRequestRepository>();
@@ -64,7 +65,6 @@ builder.Services.AddScoped<ProviderBase, WhisperTranscriberProvider>();
 builder.Services.AddScoped<ProviderBase, OpenAIChatProvider>();
 builder.Services.AddScoped<IAIProviderService, AIProviderService>();
 
-builder.Services.AddScoped<IInsightInputBuilder, TranscriptionInputBuilder>();
 builder.Services.AddScoped<IInsightInputBuilder, TranscriptionInputBuilder>();
 builder.Services.AddScoped<IInsightInputBuilder, TranscriptionDependentInputBuilder>();
 

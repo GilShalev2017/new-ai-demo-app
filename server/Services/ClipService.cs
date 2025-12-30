@@ -26,7 +26,7 @@ namespace Server.Services
         Task<Clip?> UpdateAsync(string id, UpdateClipDto dto);
         Task<bool> DeleteAsync(string id);
         Task<int> DeleteMultipleAsync(List<string> ids);
-        Task<Clip> AddInsightsToClipAsync(Clip clip, List <InsightRequest> requests);
+        Task<Clip> AddInsightsToClipAsync(Clip clip, List<InsightRequest> requests);
         Task<Clip> RemoveInsightsAsync(Clip clip, List<string> insightIdsToDelete);
         Task<FolderIngestionResultDto> IngestFolderAsync(FolderIngestionRequestDto request);
     }
@@ -41,6 +41,7 @@ namespace Server.Services
         private readonly IInsightInputBuilder _inputBuilder;
         private readonly IInsightDefinitionRepository _definitionRepo;
         private readonly IEnumerable<IInsightInputBuilder> _inputBuilders;
+        private readonly IVectorDBRepository _vectorDbRepository;
         private readonly string _videoOutputPath = "";
         private readonly string _thumbnailOutputPath = "";
 
@@ -50,13 +51,15 @@ namespace Server.Services
                 IInsightDefinitionRepository definitionRepo,
                 IClipRepository clipRepository,
                 IConfiguration configuration,
-                IVideoUtilityService videoUtilityService)
+                IVideoUtilityService videoUtilityService,
+                IVectorDBRepository vectorDbRepository)
         {
             _inputBuilders = inputBuilders;
             _aiProviderService = aiProviderService;
             _definitionRepo = definitionRepo;
             _clipRepository = clipRepository;
             _videoUtilityService = videoUtilityService;
+            _vectorDbRepository = vectorDbRepository;
             _videoOutputPath = configuration["Paths:Videos"] ?? @"C:\ACTUS_LIVEU\new-ai-demo-app\server\wwwroot\videos";
             _thumbnailOutputPath = configuration["Paths:Thumbnails"] ?? @"C:\ACTUS_LIVEU\new-ai-demo-app\server\wwwroot\thumbnails";
         }
@@ -85,7 +88,7 @@ namespace Server.Services
                 ChannelId = dto.ChannelIds.First(),
                 ChannelName = dto.ChannelName ?? "Default Channel",
                 VideoUrl = _videoUtilityService.GetVideoUrl(dto.ChannelName!, videoFileName),
-                ThumbnailUrl = _videoUtilityService.GetThumbnailUrl(dto.ChannelName!,videoFileName),
+                ThumbnailUrl = _videoUtilityService.GetThumbnailUrl(dto.ChannelName!, videoFileName),
                 Duration = _videoUtilityService.GetVideoDuration(videoFileName),
                 FileSize = _videoUtilityService.GetFileSize(videoFileName),
                 Tags = dto.Tags ?? new List<string>(),
@@ -134,37 +137,6 @@ namespace Server.Services
             return await _clipRepository.DeleteMultipleAsync(ids);
         }
 
-        //public async Task<Clip> AddInsightsToClipAsync(Clip clip,List<InsightRequest> requests)
-        //{
-        //    foreach (var request in requests)
-        //    {
-        //        var provider = _aiProviderService.GetProviderForRequest(request);
-        //        if (provider == null)
-        //            continue;
-
-        //        var handler = _insightHandlerFactory.GetHandler(request.InsightType);
-        //        if (handler == null)
-        //            continue;
-
-        //        // 1. Prepare input (polymorphic)
-        //        var inputData = await handler.PrepareInputAsync(clip, request);
-        //        if (inputData == null)
-        //            continue;
-
-        //        // 2. Execute insight
-        //        var insight = await provider.ProcessAsync(inputData, request);
-
-        //        insight.Id ??= ObjectId.GenerateNewId().ToString();
-
-        //        // 3. Attach to aggregate (encapsulated)
-        //        clip.AddOrReplaceInsight(insight);
-        //    }
-
-        //    // 4. Persist once
-        //    await _clipRepository.UpdateAsync(clip.Id, clip);
-
-        //    return clip;
-        //}
         public async Task<Clip> AddInsightsToClipAsync(Clip clip, List<InsightRequest> requests)
         {
             foreach (var request in requests)
@@ -183,25 +155,102 @@ namespace Server.Services
                     continue;
 
                 // 🔹 Enrich ChatGPT prompt from definition (optional)
-                if (request.InsightType == InsightTypes.ChatGPTPrompt &&
-                    request.PromptText == null )//&&
-                    //request.PromptName != null)
+                if (request.InsightType == InsightTypes.ChatGPTPrompt && request.PromptText == null)
                 {
-                    var def = await _definitionRepo.GetByNameAsync(request.PromptName);
+                    var def = await _definitionRepo.GetByNameAsync(request.PromptName!);
                     if (def != null)
                         request.PromptText = def.PromptTemplate;
                 }
 
                 var insight = await provider.ProcessAsync(input, request);
 
+                if (request.InsightType == InsightTypes.Transcription && insight is TranscriptionInsight transcriptionInsight)
+                {
+                    // --- Convert Transcript → TranscriptEx with absolute times
+                    if (clip.BroadcastStartTime != null)
+                    {
+                        var enrichedTranscripts = transcriptionInsight.Transcripts
+                            .Select(t => new TranscriptEx(
+                                t.Text,
+                                t.StartInSeconds,
+                                t.EndInSeconds,
+                                clip.BroadcastStartTime.Value.AddSeconds(t.StartInSeconds),
+                                clip.BroadcastStartTime.Value.AddSeconds(t.EndInSeconds)
+                            ))
+                            .ToList();
+
+                        transcriptionInsight.Transcripts = enrichedTranscripts;
+
+                        await EmbedTranscriptionsAsync(enrichedTranscripts, clip);
+                    }
+                }
+
                 insight.Id ??= ObjectId.GenerateNewId().ToString();
                 clip.AddOrReplaceInsight(insight);
             }
 
             await _clipRepository.UpdateAsync(clip.Id, clip);
+
             return clip;
         }
 
+        private async Task EmbedTranscriptionsAsync(List<TranscriptEx> transcripts, Clip clip)
+        {
+            if (transcripts == null || transcripts.Count == 0)
+                return;
+
+            if (clip.BroadcastStartTime == null || clip.BroadcastEndTime == null)
+                return;
+
+            const int chunkSize = 6; // group ~6 transcripts per embedding
+
+            var windowedTranscripts = new List<TranscriptEx>();
+
+            for (int i = 0; i < transcripts.Count; i += chunkSize)
+            {
+                var chunk = transcripts.Skip(i).Take(chunkSize).ToList();
+
+                var combinedText = string.Join(" ", chunk.Select(t => t.Text));
+
+                var absStart = chunk.First().AbsStartTime;
+                var absEnd = chunk.Last().AbsEndTime;
+
+                windowedTranscripts.Add(new TranscriptEx
+                {
+                    Text = combinedText,
+                    StartInSeconds = chunk.First().StartInSeconds,
+                    EndInSeconds = chunk.Last().EndInSeconds,
+                    AbsStartTime = absStart,
+                    AbsEndTime = absEnd
+                });
+            }
+
+            // --- Store each chunk in VectorDB
+            await _vectorDbRepository.StoreTranscriptsAsync(
+                transcripts: windowedTranscripts,
+                channelId: clip.ChannelId,
+                clipBroadcastStartTime: clip.BroadcastStartTime.Value,
+                clipBroadcastEndTime: clip.BroadcastEndTime.Value,
+                mongoId: clip.Id // yes, the clip's Id
+            );
+        }
+
+        //private async Task EmbedTranscriptionsAsync(List<TranscriptEx> transcripts, Clip clip)
+        //{
+        //    if (transcripts.Count == 0)
+        //        return;
+
+        //    if (clip.BroadcastStartTime == null || clip.BroadcastEndTime == null)
+        //        return;
+
+        //    await _vectorDbRepository.StoreTranscriptsAsync(
+        //        transcripts: transcripts,
+        //        channelId: clip.ChannelId,
+        //        clipBroadcastStartTime: clip.BroadcastStartTime.Value,
+        //        clipBroadcastEndTime: clip.BroadcastEndTime.Value,
+        //        mongoId: clip.Id // ✅ Clip's Id
+        //    );
+        //}
 
         public async Task<Clip> RemoveInsightsAsync(Clip clip, List<string> insightIdsToDelete)
         {
@@ -301,7 +350,7 @@ namespace Server.Services
                             var thumbFileName = Path.GetFileNameWithoutExtension(shortenedFileName) + ".jpg";
                             var thumbDestFolder = Path.Combine(_videoUtilityService.GetFilePathFromUrl("/thumbnails"), channelName);
                             Directory.CreateDirectory(thumbDestFolder);
-                            var thumbUrl = await _videoUtilityService.GenerateThumbnailAsync(channelName, shortenedFileName,thumbFileName);
+                            var thumbUrl = await _videoUtilityService.GenerateThumbnailAsync(channelName, shortenedFileName, thumbFileName);
 
 
                             var infoTimes = TryReadBroadcastTimes(filePath);

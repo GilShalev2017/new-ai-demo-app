@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
 
 namespace Server.Services
@@ -17,8 +18,16 @@ namespace Server.Services
         {
             _http = http;
             _http.BaseAddress = new Uri("https://api.openai.com/v1/");
+            //_http.DefaultRequestHeaders.Authorization =
+            //    new AuthenticationHeaderValue("Bearer", config["OpenAI:ApiKey"]);
+
+            var openAiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? "";
+
+            if (string.IsNullOrWhiteSpace(openAiKey))
+                throw new InvalidOperationException("OPENAI_API_KEY is not set");
+
             _http.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", config["OpenAI:ApiKey"]);
+                new AuthenticationHeaderValue("Bearer", openAiKey);
         }
 
         public async Task<float[]> EmbedAsync(string text, CancellationToken ct = default)

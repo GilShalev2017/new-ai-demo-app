@@ -279,7 +279,7 @@ namespace Server.InsightProviders
         // Helpers
         // ===========================
         private static string ConvertTranscriptsToStringWithTimeStamp(
-            List<Transcript> transcripts)
+            List<TranscriptEx> transcripts)
         {
             return string.Join("\n\n",
                 transcripts.Select(t =>

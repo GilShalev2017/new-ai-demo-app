@@ -2,7 +2,7 @@
 {
     public class InternalTranscriptionResponse
     {
-        public List<Transcript>? Transcripts { get; set; }
+        public List<TranscriptEx>? Transcripts { get; set; }
 
         public string? DetectedLanguage { get; set; }
 

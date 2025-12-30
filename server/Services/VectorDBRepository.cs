@@ -21,6 +21,7 @@ namespace Server.Services
             _embeddingProvider = embeddingProvider;
             _httpClient = http;
             _collectionName = "transcripts";
+            _httpClient.BaseAddress = new Uri("http://localhost:6333");
         }
 
         public async Task EnsureCollectionExistsAsync(int vectorSize = 1536)
@@ -44,17 +45,17 @@ namespace Server.Services
 
                     createResponse.EnsureSuccessStatusCode();
 
-                    Console.WriteLine("Qdrant collection '{CollectionName}' created via REST.", _collectionName);
+                    Console.WriteLine("Qdrant collection '{0}' created via REST.", _collectionName);
                 }
             }
             catch (HttpRequestException ex)
             {
-                Console.WriteLine("Failed to connect to Qdrant: {Message}", ex.Message);
+                Console.WriteLine("Failed to connect to Qdrant: {0}", ex.Message);
                 throw;
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Collection creation failed or already exists: {Message}", ex.Message);
+                Console.WriteLine("Collection creation failed or already exists: {0}", ex.Message);
             }
         }
 
@@ -79,10 +80,8 @@ namespace Server.Services
                     {
                         mongo_id = mongoId,
                         channelId,
-                        // Absolute time of THIS transcript segment
                         absStartTime = t.AbsStartTime,   // DateTime (UTC)
                         absEndTime = t.AbsEndTime,     // DateTime (UTC)
-                        // Optional but very useful
                         clipStartTime = clipBroadcastStartTime,
                         clipEndTime = clipBroadcastEndTime,
                         text = t.Text

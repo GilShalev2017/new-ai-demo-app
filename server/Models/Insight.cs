@@ -31,7 +31,7 @@ namespace Server.Models
 
     public sealed class TranscriptionInsight : Insight
     {
-        public required List<Transcript> Transcripts { get; init; }
+        public required List<TranscriptEx> Transcripts { get; set; }
 
         public required string AudioLanguage { get; init; }
     }
