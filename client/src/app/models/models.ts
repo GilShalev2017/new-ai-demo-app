@@ -9,6 +9,8 @@ export interface Clip {
   createdAt: Date;
   updatedAt: Date;
   tags: string[];
+  broadcastStartTime: Date;
+  broadcastEndTime: Date;
   selected?: boolean;
 
   insights: Insight[];

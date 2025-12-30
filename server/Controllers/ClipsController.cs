@@ -142,7 +142,7 @@ namespace Server.Controllers
 
             return Ok(updatedClip);
         }
-        
+
         [HttpPost("ingest-folder")]
         public async Task<IActionResult> IngestFolder([FromBody] FolderIngestionRequestDto request)
         {
@@ -157,5 +157,12 @@ namespace Server.Controllers
             return Ok(new { message = $"Folder ingestion initiated for: {request.RootFolderPath}" });
         }
 
+        [HttpPost("Agent-semantic-search")]
+        public async Task<IActionResult> SemanticSearch([FromBody] SemanticSearchDto request)
+        {
+           // var result = await _clipService.SemanticSearchAsync(request);
+
+            return Ok();// new { message = $"Folder ingestion initiated for: {request.RootFolderPath}" });
+        }
     }
 }

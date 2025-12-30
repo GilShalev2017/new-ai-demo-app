@@ -71,6 +71,12 @@ namespace Server.Models
 
         public TInsight? GetInsight<TInsight>()  where TInsight : Insight =>  Insights.OfType<TInsight>().FirstOrDefault();
 
+        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+        public DateTime? BroadcastStartTime { get; set; }
+
+        [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
+        public DateTime? BroadcastEndTime { get; set; }
+
         public void AddOrReplaceInsight(Insight insight)
         {
             var existing = Insights.FirstOrDefault(i => i.InsightType == insight.InsightType);

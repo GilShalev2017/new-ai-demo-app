@@ -68,6 +68,8 @@ builder.Services.AddScoped<IInsightInputBuilder, TranscriptionInputBuilder>();
 builder.Services.AddScoped<IInsightInputBuilder, TranscriptionInputBuilder>();
 builder.Services.AddScoped<IInsightInputBuilder, TranscriptionDependentInputBuilder>();
 
+builder.Services.AddHttpClient<IEmbeddingProvider, OpenAiEmbeddingProvider>();
+
 // Configure CORS
 builder.Services.AddCors(options =>
 {

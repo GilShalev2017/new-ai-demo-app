@@ -15,9 +15,13 @@
       <!-- Toolbar -->
       <mat-toolbar class="insights-toolbar">
         <div class="toolbar-left">
-          <span class="clip-meta">{{ clip.createdAt | date : 'short' }}</span>
-          <span class="clip-meta">{{ clip.channelName }}</span>
-          <span class="clip-meta">{{ formatDuration(clip.duration) }}</span>
+          <span class="clip-meta">
+            Broadcast Time: {{ clip.broadcastStartTime | date : 'MMM d, y · HH:mm' }}
+            –
+            {{ clip.broadcastEndTime | date : 'HH:mm' }}
+            <span class="clip-meta"> ({{ clip.duration | number : '1.0-0' }}s) </span>
+          </span>
+          <!-- <span>📺 {{ clip.channelName }}</span> -->
         </div>
 
         <span class="spacer"></span>

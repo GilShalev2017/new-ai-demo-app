@@ -6,11 +6,13 @@ set YTDLP_OPTS=^
 -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]" ^
 --merge-output-format mp4 ^
 --download-archive downloaded.txt ^
---playlist-end 18 ^
+REM --playlist-end 18 ^
+--max-downloads 18 ^
 --match-filter "duration <= 900" ^
 --dateafter now-3days ^
 --no-playlist ^
 --progress ^
+--write-info-json ^
 --newline
 
 REM === BBC NEWS ===

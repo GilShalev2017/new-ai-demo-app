@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
 using Server.DTOs;
 using Server.InsightProviders;
 using Server.Models;
@@ -12,6 +13,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace Server.Services
@@ -226,6 +228,29 @@ namespace Server.Services
 
             return $"{string.Join("_", words)}_{channel}.mp4";
         }
+        private (DateTime startUtc, DateTime endUtc)? TryReadBroadcastTimes(string videoPath)
+        {
+            var infoPath = Path.ChangeExtension(videoPath, ".info.json");
+            if (!File.Exists(infoPath))
+                return null;
+
+            using var doc = JsonDocument.Parse(File.ReadAllText(infoPath));
+            var root = doc.RootElement;
+
+            if (!root.TryGetProperty("timestamp", out var tsProp))
+                return null;
+
+            var uploadUtc = DateTimeOffset
+                .FromUnixTimeSeconds(tsProp.GetInt64())
+                .UtcDateTime;
+
+            var duration = root.TryGetProperty("duration", out var durProp)
+                ? durProp.GetInt32()
+                : 0;
+
+            return (uploadUtc, uploadUtc.AddSeconds(duration));
+        }
+
         public async Task<FolderIngestionResultDto> IngestFolderAsync(FolderIngestionRequestDto request)
         {
             var result = new FolderIngestionResultDto();
@@ -276,13 +301,13 @@ namespace Server.Services
                             var thumbFileName = Path.GetFileNameWithoutExtension(shortenedFileName) + ".jpg";
                             var thumbDestFolder = Path.Combine(_videoUtilityService.GetFilePathFromUrl("/thumbnails"), channelName);
                             Directory.CreateDirectory(thumbDestFolder);
-                            var thumbUrl = await _videoUtilityService.GenerateThumbnailAsync(
-     channelName,
-     shortenedFileName,
-     thumbFileName
- );
+                            var thumbUrl = await _videoUtilityService.GenerateThumbnailAsync(channelName, shortenedFileName,thumbFileName);
 
-                            // --- Create Clip object ---
+
+                            var infoTimes = TryReadBroadcastTimes(filePath);
+                            DateTime? broadcastStart = infoTimes?.startUtc;
+                            DateTime? broadcastEnd = infoTimes?.endUtc;
+
                             var clip = new Clip
                             {
                                 Title = Path.GetFileNameWithoutExtension(shortenedFileName),
@@ -292,7 +317,10 @@ namespace Server.Services
                                 VideoUrl = _videoUtilityService.GetVideoUrl(channelName, shortenedFileName),
                                 ThumbnailUrl = _videoUtilityService.GetThumbnailUrl(channelName, shortenedFileName),
                                 Duration = _videoUtilityService.GetVideoDuration(Path.Combine(channelName, shortenedFileName)),
-                                FileSize = _videoUtilityService.GetFileSize(Path.Combine(channelName, shortenedFileName))
+                                FileSize = _videoUtilityService.GetFileSize(Path.Combine(channelName, shortenedFileName)),
+
+                                BroadcastStartTime = broadcastStart,
+                                BroadcastEndTime = broadcastEnd,
                             };
 
                             await _clipRepository.CreateAsync(clip);
