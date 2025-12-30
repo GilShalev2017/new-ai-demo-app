@@ -184,8 +184,7 @@ namespace Server.Services
                         await EmbedTranscriptionsAsync(enrichedTranscripts, clip);
                     }
                 }
-
-                insight.Id ??= ObjectId.GenerateNewId().ToString();
+                
                 clip.AddOrReplaceInsight(insight);
             }
 
