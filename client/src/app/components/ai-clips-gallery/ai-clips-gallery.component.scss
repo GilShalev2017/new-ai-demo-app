@@ -67,7 +67,7 @@
         outline: none;
         font-size: 14px;
         border-radius: 6px;
-        
+
         &.has-text {
           font-weight: 500;
         }
@@ -87,14 +87,14 @@
   transform: translateY(-50%);
   color: #666;
   cursor: pointer;
-  
+
   &.left-input-icon {
     left: 10px;
   }
-  
+
   &.right-input-icon {
     right: 10px;
-    
+
     &:hover {
       color: #333;
     }
@@ -110,7 +110,7 @@
   font-weight: 400;
   display: flex;
   align-items: center;
-  
+
   mat-select {
     font-size: 12px;
     margin: 0 4px;
@@ -133,16 +133,16 @@
   align-items: center;
   gap: 6px;
   transition: all 0.2s;
-  
+
   &:hover {
     background: rgba(255, 255, 255, 0.3);
   }
-  
+
   .button-icon {
     vertical-align: text-bottom;
     font-size: 20px;
   }
-  
+
   .button-text {
     padding-left: 5px;
   }
@@ -157,7 +157,7 @@
   margin-right: 8px;
   line-height: 32.5px;
   background: #764ba2;
-  
+
   mat-icon {
     margin-right: 5px;
   }
@@ -225,12 +225,12 @@
   background: #f8f9fa;
   border: 1px solid #dee2e6;
   color: #495057;
-  
+
   &:hover {
     background: #e9ecef;
     border-color: #adb5bd;
   }
-  
+
   &.selected {
     background: #5f6cba;
     color: white;
@@ -243,7 +243,7 @@
   transition: color 0.3s;
   color: #6c757d;
   margin: 0 8px;
-  
+
   &:hover {
     color: #5f6cba;
   }
@@ -254,6 +254,10 @@
   margin-left: 8px;
   margin-top: 8px;
   min-width: 150px;
+
+  height: 48px;
+  max-height: 48px;
+  margin-bottom: 14px;
 }
 
 .sort-container {
@@ -279,19 +283,19 @@
   border-top: none;
   padding: 4px 16px;
   cursor: pointer;
-  
+
   &.show-filters {
     margin-top: -1px;
   }
-  
+
   .appendix-button {
     vertical-align: text-bottom;
   }
-  
+
   .appendix-text {
     padding-left: 5px;
   }
-  
+
   &:hover {
     background: #f8f9fa;
   }
@@ -346,7 +350,7 @@
   font-size: 12px;
   color: #6c757d;
   margin-left: 15px;
-  
+
   .primary-color {
     color: #5f6cba;
     cursor: help;
@@ -361,7 +365,7 @@
 
 .clear-filter-icon {
   cursor: pointer;
-  
+
   &:hover {
     opacity: 0.7;
   }
@@ -378,7 +382,7 @@
   cursor: pointer;
   white-space: nowrap;
   font-weight: 490;
-  
+
   &:hover {
     opacity: 0.7;
   }
@@ -438,7 +442,7 @@
   align-items: center;
   gap: 8px;
   padding: 0 24px;
-  
+
   mat-icon {
     margin-right: 5px;
   }
@@ -471,7 +475,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all 0.3s;
   cursor: pointer;
-  
+
   &:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
@@ -484,7 +488,7 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   position: relative;
   overflow: hidden;
-  
+
   img {
     width: 100%;
     height: 100%;
@@ -508,10 +512,10 @@
   position: absolute;
   top: 8px;
   left: 8px;
-  background: transparent;// rgba(255, 255, 255, 0.9);
+  background: transparent; // rgba(255, 255, 255, 0.9);
   border-radius: 4px;
   padding: 2px;
-  
+
   mat-checkbox {
     display: block;
     color: orange;
@@ -562,7 +566,7 @@
   .video-clip-gallery {
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   }
-  
+
   .category-toolbar {
     max-width: 50%;
   }
@@ -571,34 +575,34 @@
 @media (max-width: 768px) {
   .search-div {
     min-width: 200px;
-    
+
     &.expanded .animated-search {
       width: 300px;
     }
   }
-  
+
   .clips-span {
     display: none;
   }
-  
+
   .video-clip-gallery {
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 15px;
     padding: 15px;
   }
-  
+
   .filters-toolbar {
     flex-wrap: wrap;
     padding: 10px;
   }
-  
+
   .category-toolbar {
     max-width: 100%;
     order: 3;
     width: 100%;
     margin-top: 10px;
   }
-  
+
   .filter-field {
     margin-top: 0;
   }
@@ -608,12 +612,77 @@
   .video-clip-gallery {
     grid-template-columns: 1fr;
   }
-  
+
   .action-button .button-text {
     display: none;
   }
-  
+
   .search-container {
     margin-left: 10px;
+  }
+}
+
+// Remove or reduce the min-height from .category
+.category {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px; // Reduced from 7px 16px
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s;
+  // min-height: 32px; <- Remove this line
+  font-size: 14px;
+  font-weight: 500;
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  color: #495057;
+
+  &:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+  }
+
+  &.selected {
+    background: #5f6cba;
+    color: white;
+    border-color: #5f6cba;
+  }
+}
+
+// Make the mat-form-fields match the category height
+.filter-field {
+  margin-right: 12px;
+  margin-left: 8px;
+  margin-top: 32px;
+  margin-bottom: 8px;
+  min-width: 150px;
+
+  // These control the overall field container
+  ::ng-deep .mat-mdc-form-field-flex {
+    height: 32px !important; // Match category height
+    align-items: center;
+  }
+
+  // Control the select trigger height
+  ::ng-deep .mat-mdc-select-trigger {
+    height: 32px !important;
+    min-height: 32px !important;
+  }
+
+  // Adjust label position
+  // ::ng-deep .mat-mdc-floating-label {
+  //   top: 16px !important; // Half of 32px
+  // }
+
+  // Reduce font size to match categories
+  // ::ng-deep .mat-mdc-select-value,
+  // ::ng-deep .mat-mdc-form-field-label {
+  //   font-size: 14px;
+  // }
+
+  // Remove extra padding
+  ::ng-deep .mat-mdc-text-field-wrapper {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
   }
 }
