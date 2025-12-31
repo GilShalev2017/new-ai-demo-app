@@ -16,4 +16,8 @@
     <ProjectReference Include="..\WhisperTranscriber\WhisperTranscriber.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="logs\" />
+  </ItemGroup>
+
 </Project>

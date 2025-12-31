@@ -160,9 +160,13 @@ namespace Server.Controllers
         [HttpPost("transcript-agent")]
         public async Task<IActionResult> SemanticSearch([FromBody] SemanticSearchDto request)
         {
-           // var result = await _clipService.SemanticSearchAsync(request);
+            if (string.IsNullOrWhiteSpace(request.Query))
+                return BadRequest("Query is required");
 
-            return Ok();// new { message = $"Folder ingestion initiated for: {request.RootFolderPath}" });
+            var result = await _clipService.SemanticSearchAsync(request);
+
+            return Ok(result);
         }
+
     }
 }

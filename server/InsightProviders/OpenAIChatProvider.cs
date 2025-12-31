@@ -2,152 +2,17 @@
 using Sprache;
 using System.Text;
 using System.Text.Json;
+using SharpToken;
+using System.Net.Http.Headers;
 
 namespace Server.InsightProviders
 {
-    //public class OpenAIChatProvider : ProviderBase
-    //{
-    //    public override string Name => "OpenAIChatProvider";
-    //    public override IReadOnlyCollection<InsightTypes> SupportedInsightTypes => new[] { InsightTypes.Summary, InsightTypes.ChatGPTPrompt };
-
-    //    private readonly HttpClient _httpClient;
-
-    //    private string openAiKey = "";
-
-    //    public OpenAIChatProvider()
-    //    {
-    //        // Ideally, inject IHttpClientFactory in production
-    //        _httpClient = new HttpClient
-    //        {
-    //            Timeout = TimeSpan.FromMinutes(5)
-    //        };
-
-    //        openAiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY");
-
-    //        if (string.IsNullOrEmpty(openAiKey))
-    //            throw new Exception("OPENAI_API_KEY is not set");
-    //    }
-
-    //    protected override void EnsureInputValidity(InsightInputData input)
-    //    {
-    //        if (input.Transcripts == null || input.Transcripts.Count == 0)
-    //            throw new InvalidOperationException("Transcripts are required for summary.");
-    //    }
-
-    //    protected override async Task<Insight> StartProcessingAsync(InsightInputData insightInputData, InsightRequest insightRequest)
-    //    {
-    //        // Merge all transcripts into one string (with timestamps)
-    //        if (insightRequest.InsightType == InsightTypes.Summary)
-    //        {
-    //            string mergedTranscripts = ConvertTranscriptsToStringWithTimeStamp(insightInputData.Transcripts!);
-
-    //            string systemMessage = "You are an AI assistant. Summarize the following transcription concisely while preserving the main points.";
-
-    //            string summary = await SummarizeAsync(systemMessage, mergedTranscripts);
-
-    //            if (string.IsNullOrWhiteSpace(summary))
-    //                throw new InvalidOperationException("OpenAI returned an empty summary.");
-
-    //            return CreateSummaryResponse(summary);
-    //        }
-    //        else
-    //        {
-    //            var prompt = $"{insightRequest.PromptText}\n\n{insightInputData.Transcripts}";
-
-    //            var response = await CallOpenAI(prompt);
-
-    //            return new Insight
-    //            {
-    //                InsightType = request.InsightType,
-    //                Name = request.PromptName ?? request.InsightType.ToString(),
-    //                Content = response
-    //            };
-    //        }
-    //    }
-
-    //    private async Task<string> SummarizeAsync(string systemMessage, string transcriptions)
-    //    {
-    //        using var httpClient = new HttpClient
-    //        {
-    //            Timeout = TimeSpan.FromMinutes(5)
-    //        };
-
-    //        httpClient.DefaultRequestHeaders.Authorization =
-    //            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", openAiKey);
-
-    //        // Build a single prompt combining system instruction and text to summarize
-    //        string prompt = $"{systemMessage}\n\n{transcriptions}";
-
-    //        var requestBody = new
-    //        {
-    //            model = "gpt-5.2",        // Use a recent reasoning-capable model
-    //            input = prompt           // Pass prompt via "input"
-    //        };
-
-    //        var content = new StringContent(JsonSerializer.Serialize(requestBody),
-    //            Encoding.UTF8, "application/json");
-
-    //        var response = await httpClient.PostAsync("https://api.openai.com/v1/responses", content);
-    //        var jsonString = await response.Content.ReadAsStringAsync();
-
-    //        if (!response.IsSuccessStatusCode)
-    //            throw new InvalidOperationException($"OpenAI API error: {response.StatusCode} - {jsonString}");
-
-    //        using var doc = JsonDocument.Parse(jsonString);
-
-    //        // Responses API returns output items — find the assistant text
-    //        if (doc.RootElement.TryGetProperty("output", out var outputArray))
-    //        {
-    //            foreach (var item in outputArray.EnumerateArray())
-    //            {
-    //                if (item.GetProperty("type").GetString() == "message"
-    //                    && item.TryGetProperty("content", out var contentElems))
-    //                {
-    //                    foreach (var contentElem in contentElems.EnumerateArray())
-    //                    {
-    //                        if (contentElem.GetProperty("type").GetString() == "output_text")
-    //                        {
-    //                            return contentElem.GetProperty("text").GetString() ?? "";
-    //                        }
-    //                    }
-    //                }
-    //            }
-    //        }
-
-    //        return "";
-    //    }
-
-    //    private static string ConvertTranscriptsToString(List<Transcript> transcripts)
-    //    {
-    //        return string.Join(" ", transcripts.Select(t => t.Text));
-    //    }
-
-    //    private static string ConvertTranscriptsToStringWithTimeStamp(List<Transcript> transcripts)
-    //    {
-    //        return string.Join("\n\n", transcripts.Select(t =>
-    //            $"{TimeSpan.FromSeconds(t.StartInSeconds):hh\\:mm\\:ss} - {TimeSpan.FromSeconds(t.EndInSeconds):hh\\:mm\\:ss}\n{t.Text}"));
-    //    }
-
-    //    private Insight CreateSummaryResponse(string summary)
-    //    {
-    //        return new SummaryInsight
-    //        {
-    //            ProviderName = Name,
-    //            InsightType = InsightTypes.Summary,
-    //            Summary = summary
-    //        };
-    //    }
-    //}
-    using System.Net.Http.Headers;
-    using System.Text;
-    using System.Text.Json;
-
     public class OpenAIChatProvider : ProviderBase
     {
         public override string Name => "OpenAIChatProvider";
 
         public override IReadOnlyCollection<InsightTypes> SupportedInsightTypes =>
-            new[] { InsightTypes.Summary, InsightTypes.ChatGPTPrompt };
+            new[] { InsightTypes.Summary, InsightTypes.ChatGPTPrompt, InsightTypes.SemanticSearch };
 
         private readonly HttpClient _httpClient;
         private readonly string _openAiKey;
@@ -164,8 +29,7 @@ namespace Server.InsightProviders
             if (string.IsNullOrWhiteSpace(_openAiKey))
                 throw new InvalidOperationException("OPENAI_API_KEY is not set");
 
-            _httpClient.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", _openAiKey);
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _openAiKey);
         }
 
         protected override void EnsureInputValidity(InsightInputData input)
@@ -174,9 +38,7 @@ namespace Server.InsightProviders
                 throw new InvalidOperationException("Transcripts are required for OpenAI insights.");
         }
 
-        protected override async Task<Insight> StartProcessingAsync(
-            InsightInputData insightInputData,
-            InsightRequest insightRequest)
+        protected override async Task<Insight> StartProcessingAsync(InsightInputData insightInputData, InsightRequest insightRequest)
         {
             EnsureInputValidity(insightInputData);
 
@@ -224,9 +86,6 @@ namespace Server.InsightProviders
             throw new NotSupportedException($"Insight type {insightRequest.InsightType} is not supported by {Name}");
         }
 
-        // ===========================
-        // OpenAI call
-        // ===========================
         private async Task<string> CallOpenAIAsync(string systemPrompt, string userContent)
         {
             string prompt = $"{systemPrompt}\n\n{userContent}";
@@ -274,18 +133,48 @@ namespace Server.InsightProviders
 
             return "";
         }
+        public async Task<string> GetChatCompletionAsync(string prompt, string data)
+        {
+            var encoding = GptEncoding.GetEncodingForModel("gpt-5.2");
+            int totalTokens = encoding.Encode(prompt).Count + encoding.Encode(data).Count;
 
-        // ===========================
-        // Helpers
-        // ===========================
-        private static string ConvertTranscriptsToStringWithTimeStamp(
-            List<TranscriptEx> transcripts)
+            if (totalTokens > 128000)//find out the gpt-5.2 limitations
+            {
+                //throw new Exception($"Your query contains too much data ({totalTokens} tokens). " +
+                //    $"Please reduce the time range, number of channels, or amount of input data.");
+                return $"__TOO_MANY_TOKENS__:{totalTokens}";
+            }
+
+            var body = new
+            {
+                model = "gpt-5.2",//Could be others!!!
+                messages = new[]
+                {
+                     new { role = "system", content = prompt },  // Instructions and context
+                     new { role = "user", content = data }    // The actual data to analyze
+                },
+            };
+
+            var response = await _httpClient.PostAsJsonAsync("https://api.openai.com/v1/chat/completions", body);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception("OpenAI API error: " + error);
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<JsonElement>();
+            return result.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
+        }
+        private static string ConvertTranscriptsToStringWithTimeStamp(List<TranscriptEx> transcripts)
         {
             return string.Join("\n\n",
                 transcripts.Select(t =>
                     $"{TimeSpan.FromSeconds(t.StartInSeconds):hh\\:mm\\:ss} - " +
                     $"{TimeSpan.FromSeconds(t.EndInSeconds):hh\\:mm\\:ss}\n{t.Text}"));
         }
-    }
 
+        
+    }
 }
+

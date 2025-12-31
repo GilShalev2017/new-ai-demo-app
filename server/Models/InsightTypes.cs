@@ -7,7 +7,8 @@
         Summary,
         FaceDetection,
         ChatGPTPrompt,
-        LogoDetection
+        LogoDetection,
+        SemanticSearch
     }
 
     public enum InsightKind

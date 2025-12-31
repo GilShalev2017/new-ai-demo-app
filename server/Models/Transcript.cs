@@ -41,7 +41,7 @@ namespace Server.Models
         public DateTime? Start { get; set; }
         [BsonDateTimeOptions(Kind = DateTimeKind.Local)]
         public DateTime? End { get; set; }
-        public int[]? ChannelIds { get; set; }
+        public List<string>? Channels { get; set; }
 
     }
 }

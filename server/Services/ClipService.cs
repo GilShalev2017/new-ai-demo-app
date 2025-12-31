@@ -29,6 +29,7 @@ namespace Server.Services
         Task<Clip> AddInsightsToClipAsync(Clip clip, List<InsightRequest> requests);
         Task<Clip> RemoveInsightsAsync(Clip clip, List<string> insightIdsToDelete);
         Task<FolderIngestionResultDto> IngestFolderAsync(FolderIngestionRequestDto request);
+        Task<SemanticSearchResponseDto> SemanticSearchAsync(SemanticSearchDto request);
     }
 
     public class ClipService : IClipService
@@ -42,6 +43,9 @@ namespace Server.Services
         private readonly IInsightDefinitionRepository _definitionRepo;
         private readonly IEnumerable<IInsightInputBuilder> _inputBuilders;
         private readonly IVectorDBRepository _vectorDbRepository;
+        private readonly IEmbeddingProvider _embeddingProvider;
+        private readonly IEntityExtractor _entityExtractor;
+        private readonly IPromptComposer _promptComposer;
         private readonly string _videoOutputPath = "";
         private readonly string _thumbnailOutputPath = "";
 
@@ -52,7 +56,10 @@ namespace Server.Services
                 IClipRepository clipRepository,
                 IConfiguration configuration,
                 IVideoUtilityService videoUtilityService,
-                IVectorDBRepository vectorDbRepository)
+                IEmbeddingProvider embeddingProvider,
+                IVectorDBRepository vectorDbRepository,
+                IEntityExtractor entityExtractor,
+                IPromptComposer promptComposer)
         {
             _inputBuilders = inputBuilders;
             _aiProviderService = aiProviderService;
@@ -60,8 +67,11 @@ namespace Server.Services
             _clipRepository = clipRepository;
             _videoUtilityService = videoUtilityService;
             _vectorDbRepository = vectorDbRepository;
+            _embeddingProvider = embeddingProvider;
+            _entityExtractor = entityExtractor;
             _videoOutputPath = configuration["Paths:Videos"] ?? @"C:\ACTUS_LIVEU\new-ai-demo-app\server\wwwroot\videos";
             _thumbnailOutputPath = configuration["Paths:Thumbnails"] ?? @"C:\ACTUS_LIVEU\new-ai-demo-app\server\wwwroot\thumbnails";
+            _promptComposer = promptComposer;
         }
 
         public async Task<ClipSearchResponse> SearchClipsAsync(ClipSearchRequest request)
@@ -184,7 +194,7 @@ namespace Server.Services
                         await EmbedTranscriptionsAsync(enrichedTranscripts, clip);
                     }
                 }
-                
+
                 clip.AddOrReplaceInsight(insight);
             }
 
@@ -392,6 +402,49 @@ namespace Server.Services
             }
 
             return result;
+        }
+
+        public async Task<SemanticSearchResponseDto> SemanticSearchAsync(SemanticSearchDto request)
+        {
+            // 1️⃣ Extract intent
+            QueryIntentContext context = await _entityExtractor.ExtractAsync(request.Query);
+         
+            context.OriginalQuery = request.Query;
+
+            // 2️⃣ Build filter
+            var filter = new TranscriptsFilter { Start = context.StartDate, End = context.EndDate, Channels = context.Channels };
+
+            // 3️⃣ Vector search (REAL transcripts)
+            var evidence = await _vectorDbRepository.SearchAsync(request.Query,filter,request.MaxEvidence);
+
+            if (!evidence.Any())
+            {
+                return new SemanticSearchResponseDto
+                {
+                    Answer = "I couldn’t find any relevant transcript data for your question."
+                };
+            }
+
+            // 4️⃣ Compose grounded prompt
+            var (systemPrompt, evidenceText) = _promptComposer.Compose(context, evidence);
+
+            // 5️⃣ Resolve provider
+            var insightRequest = new InsightRequest
+            {
+                InsightType = InsightTypes.SemanticSearch
+            };
+
+            var provider = _aiProviderService.GetProviderForRequest(insightRequest) as OpenAIChatProvider ?? throw new InvalidOperationException("OpenAIChatProvider not available");
+
+            // 6️⃣ Call LLM
+            var answer = await provider.GetChatCompletionAsync(systemPrompt,evidenceText);
+
+            // 7️⃣ Return structured response
+            return new SemanticSearchResponseDto
+            {
+                Answer = answer,
+                Evidence = evidence
+            };
         }
     }
 }

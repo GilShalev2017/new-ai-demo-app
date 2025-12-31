@@ -1,4 +1,5 @@
-﻿using Server.Models;
+﻿using Server.DTOs;
+using Server.Models;
 using System.Net.Http;
 using System.Text.Json;
 
@@ -7,7 +8,7 @@ namespace Server.Services
     public interface IVectorDBRepository
     {
         Task StoreTranscriptsAsync(List<TranscriptEx> transcripts, string channelId, DateTime clipBroadcastStartTime, DateTime clipBroadcastEndTime, string? mongoId = null);
-        Task<IEnumerable<string>> SearchAsync(string query, TranscriptsFilter filter, int topK = 5);
+        Task<List<EvidenceDto>> SearchAsync(string query, TranscriptsFilter filter, int topK = 5);
     }
 
     public class VectorDBRepository : IVectorDBRepository
@@ -94,7 +95,7 @@ namespace Server.Services
             response.EnsureSuccessStatusCode();
         }
 
-        public async Task<IEnumerable<string>> SearchAsync(string query, TranscriptsFilter filter, int topK = 5)
+        public async Task<List<EvidenceDto>> SearchAsync(string query, TranscriptsFilter filter, int topK = 5)
         {
             var vector = await _embeddingProvider.EmbedAsync(query);
 
@@ -106,7 +107,11 @@ namespace Server.Services
             if (filter.End.HasValue)
                 must.Add(new { key = "clipEnd", range = new { lte = filter.End } });
 
-            var response = await _httpClient.PostAsJsonAsync($"collections/{_collectionName}/points/search",
+            if (filter.Channels?.Any() == true)
+                must.Add(new { key = "channel", match = new { any = filter.Channels } });
+
+            var response = await _httpClient.PostAsJsonAsync(
+                $"collections/{_collectionName}/points/search",
                 new
                 {
                     vector,
@@ -122,8 +127,15 @@ namespace Server.Services
             return json!.RootElement
                 .GetProperty("result")
                 .EnumerateArray()
-                .Select(r => r.GetProperty("payload").GetProperty("mongo_id").GetString()!)
-                .Distinct();
+                .Select(r => new EvidenceDto
+                {
+                    ClipId = r.GetProperty("payload").GetProperty("mongo_id").GetString()!,
+                    Channel = r.GetProperty("payload").GetProperty("channel").GetString()!,
+                    Timestamp = r.GetProperty("payload").GetProperty("timestamp").GetDateTime(),
+                    Text = r.GetProperty("payload").GetProperty("text").GetString()!,
+                    Score = r.GetProperty("score").GetSingle()
+                })
+                .ToList();
         }
 
     }
