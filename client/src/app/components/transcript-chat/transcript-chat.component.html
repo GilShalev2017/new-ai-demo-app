@@ -23,7 +23,7 @@
         </button>
 
         <!-- Help Panel -->
-        
+
         <div class="sidebar-middle">
           <!-- Users Queries -->
           <mat-card *ngIf="showHelp" class="examples-card">
@@ -31,11 +31,12 @@
               <mat-card-title>Available Queries</mat-card-title>
             </mat-card-header>
             <mat-card-content>
-               <button
+              <button
                 mat-button
                 class="user-query"
                 *ngFor="let query of userQueries"
-                (click)="useUserQuery(query)">
+                (click)="useUserQuery(query)"
+              >
                 "{{ query }}"
               </button>
             </mat-card-content>
@@ -50,7 +51,8 @@
                 mat-button
                 class="example-query"
                 *ngFor="let query of exampleQueries"
-                (click)="useExampleQuery(query)">
+                (click)="useExampleQuery(query)"
+              >
                 "{{ query }}"
               </button>
             </mat-card-content>
@@ -91,7 +93,10 @@
             >
               <mat-card class="message-card">
                 <mat-card-content>
-                  <p class="message-text">{{ msg.content }}</p>
+                  <p class="message-text">
+                    {{ msg.content }}
+                  </p>
+                  <!-- <p [innerHTML]="convertMdToHtml(msg.content)"></p> -->
                   <div *ngIf="msg.tokens" class="message-meta">
                     <mat-chip-set>
                       <mat-chip>
@@ -129,13 +134,15 @@
               <!-- Token Estimate -->
               <div *ngIf="tokenEstimate > 0" class="token-estimate">
                 <mat-chip-set>
-                  <mat-chip >
+                  <mat-chip>
                     <mat-icon matChipAvatar>bolt</mat-icon>
-                    <span style="color: white !important;">Estimated: {{ tokenEstimate }} tokens</span>
+                    <span style="color: white !important"
+                      >Estimated: {{ tokenEstimate }} tokens</span
+                    >
                   </mat-chip>
                   <mat-chip>
                     <mat-icon matChipAvatar>attach_money</mat-icon>
-                    <span style="color: white !important;">Cost: ${{ costEstimate }}</span>
+                    <span style="color: white !important">Cost: ${{ costEstimate }}</span>
                   </mat-chip>
                 </mat-chip-set>
               </div>
@@ -158,7 +165,8 @@
                   class="send-button"
                   (click)="sendMessage()"
                   [disabled]="!input.trim() || isLoading"
-                  style="color: white !important;">
+                  style="color: white !important"
+                >
                   <mat-icon>send</mat-icon>
                   Send
                 </button>

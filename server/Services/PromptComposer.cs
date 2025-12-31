@@ -32,7 +32,7 @@ namespace Server.Services
                 foreach (var e in evidence)
                 {
                     sbUser.AppendLine(
-                        $"[{e.Channel} @ {e.Timestamp:yyyy-MM-dd HH:mm:ss}] {e.Text}");
+                        $"[{e.ChannelId} @ {e.ClipStartTime:yyyy-MM-dd HH:mm:ss}] {e.Text}");
                 }
             }
 

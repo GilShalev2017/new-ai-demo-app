@@ -175,32 +175,6 @@ export class ClipDetailsComponent implements OnInit {
         aiClip: this.clip,
       },
     });
-
-    // const currentInsights = this.getClipInsightTypes();
-
-    // const dialogRef = this.dialog.open(AddInsightsComponent, {
-    //   width: '750px',
-    //   //height: '750px',
-    //   disableClose: true,
-    //   data: { existingInsights: currentInsights, isUserDefined: true, aiClip: this.aiClip },
-    // });
-
-    // dialogRef.afterClosed().subscribe((newInsightRequests) => {
-    //   if (newInsightRequests) {
-    //     this.mediaInsightService
-    //       .addNewInsights(this.aiClip.Id, newInsightRequests)
-    //       .pipe(finalize(() => this.setIsAllInsigtExist()))
-    //       .subscribe({
-    //         next: (clipDm) => {
-    //           this.aiClip = clipDm;
-    //           this.mediaInsightService.insightAdded$.next(this.aiClip.Id);
-    //         },
-    //         error: (err: HttpErrorResponse) => {
-    //           console.log(err);
-    //         },
-    //       });
-    //   }
-    // });
   }
 
   shareClip(): void {

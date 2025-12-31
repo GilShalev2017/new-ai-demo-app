@@ -3,9 +3,9 @@
     public class EvidenceDto
     {
         public string ClipId { get; set; } = string.Empty;
-        public string Channel { get; set; } = string.Empty;
+        public string ChannelId { get; set; } = string.Empty;
 
-        public DateTime? Timestamp { get; set; }
+        public DateTime? ClipStartTime { get; set; }
 
         public string Text { get; set; } = string.Empty;
 

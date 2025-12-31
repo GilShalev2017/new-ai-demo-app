@@ -14,7 +14,7 @@ import {
   InsightRequest,
   ObjectDetection,
   SentimentData,
-  TranscriptQueryResponse,
+  SemanticSearchResponseDto,
 } from '../models/models';
 
 @Injectable({
@@ -31,10 +31,6 @@ export class ClipService {
   private readonly clipsApi = '/api/clips';
 
   constructor(private http: HttpClient) {}
-
-  // ============================================
-  // CRUD Operations
-  // ============================================
 
   /**
    * GET: /api/clips
@@ -189,7 +185,7 @@ export class ClipService {
     );
   }
 
-  query(query: string): Observable<TranscriptQueryResponse> {
-    return this.http.post<TranscriptQueryResponse>(`${this.clipsApi}/transcript-agent`, { query });
+  query(query: string): Observable<SemanticSearchResponseDto> {
+    return this.http.post<SemanticSearchResponseDto>(`${this.clipsApi}/transcript-agent`, { query });
   }
 }

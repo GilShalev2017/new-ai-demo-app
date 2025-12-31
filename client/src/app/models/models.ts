@@ -201,8 +201,14 @@ export interface Message {
   cost?: string;
 }
 
-export interface TranscriptQueryResponse {
+export interface SemanticSearchResponseDto {
   answer: string;
-  tokens: number;
-  cost: number;
+  evidence: EvidenceDto[];
+}
+export interface EvidenceDto {
+  clipId: string;
+  channelId: string;
+  clipStartTime: Date;
+  text: string;
+  score: number;
 }

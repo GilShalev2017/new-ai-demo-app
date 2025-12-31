@@ -102,13 +102,13 @@ namespace Server.Services
             var must = new List<object>();
 
             if (filter.Start.HasValue)
-                must.Add(new { key = "clipStart", range = new { gte = filter.Start } });
+                must.Add(new { key = "absStartTime", range = new { gte = filter.Start } });
 
             if (filter.End.HasValue)
-                must.Add(new { key = "clipEnd", range = new { lte = filter.End } });
+                must.Add(new { key = "absEndTime", range = new { lte = filter.End } });
 
             if (filter.Channels?.Any() == true)
-                must.Add(new { key = "channel", match = new { any = filter.Channels } });
+                must.Add(new { key = "channelId", match = new { any = filter.Channels } });
 
             var response = await _httpClient.PostAsJsonAsync(
                 $"collections/{_collectionName}/points/search",
@@ -130,8 +130,8 @@ namespace Server.Services
                 .Select(r => new EvidenceDto
                 {
                     ClipId = r.GetProperty("payload").GetProperty("mongo_id").GetString()!,
-                    Channel = r.GetProperty("payload").GetProperty("channel").GetString()!,
-                    Timestamp = r.GetProperty("payload").GetProperty("timestamp").GetDateTime(),
+                    ChannelId = r.GetProperty("payload").GetProperty("channelId").GetString()!,
+                    ClipStartTime = r.GetProperty("payload").GetProperty("clipStartTime").GetDateTime(),
                     Text = r.GetProperty("payload").GetProperty("text").GetString()!,
                     Score = r.GetProperty("score").GetSingle()
                 })

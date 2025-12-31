@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
-import { Message } from '../../models/models';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
+import { Message, SemanticSearchResponseDto } from '../../models/models';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../shared/material.module';
 import { ClipService } from '../../services/clip.service';
+import { marked } from 'marked';
 
 @Component({
   selector: 'app-transcript-chat.component',
@@ -31,13 +32,11 @@ export class TranscriptChatComponent implements OnInit {
     'Find speaker statistics',
     'Extract key topics',
     'Date range queries',
-    'Sentiment analysis xxxxxxxxxxxxxxxxxxxxxxxxxxx'
-  ]
+    'Sentiment analysis xxxxxxxxxxxxxxxxxxxxxxxxxxx',
+  ];
 
-  constructor(private clipService: ClipService) {
+  constructor(private clipService: ClipService, private cdr: ChangeDetectorRef) {}
 
-  }
-  
   ngOnInit(): void {
     this.messages.push({
       type: 'system',
@@ -75,31 +74,95 @@ export class TranscriptChatComponent implements OnInit {
     };
 
     this.messages.push(userMessage);
+
     const query = this.input;
+
+    // reset input UI
     this.input = '';
     this.tokenEstimate = 0;
     this.costEstimate = '0.0000';
     this.isLoading = true;
 
-    this.clipService.query(query).subscribe(
-      (result)=>{
+    this.clipService.query(query).subscribe({
+      next: (result: SemanticSearchResponseDto) => {
+        const aiMessage: Message = {
+          type: 'assistant',
+          content: result.answer ?? 'No answer returned.',
+          timestamp: new Date(),
+        };
 
+        this.messages.push(aiMessage);
+
+        // OPTIONAL: show evidences
+        // if (result.evidence?.length) {
+        //   result.evidence.forEach((ev) => {
+        //     this.messages.push({
+        //       type: 'assistant',
+        //       content: `📌 ${ev.channelId} @ ${new Date(ev.clipStartTime!).toLocaleString()}\n${
+        //         ev.text
+        //       }`,
+        //       timestamp: new Date(),
+        //     });
+        //   });
+        // }
+
+        this.isLoading = false;
+        this.scrollToBottom();
+        this.cdr.detectChanges();
+      },
+
+      error: (err) => {
+        console.error('Transcript query failed', err);
+
+        this.messages.push({
+          type: 'assistant',
+          content: '❌ Failed to query transcripts. Please try again.',
+          timestamp: new Date(),
+        });
+
+        this.isLoading = false;
+        this.scrollToBottom();
+        this.cdr.detectChanges();
+      },
     });
-
-    // Simulate AI response
-    setTimeout(() => {
-      const aiMessage: Message = {
-        type: 'assistant',
-        content: 'This is a mock response. Replace this with your actual C# agent API call.',
-        timestamp: new Date(),
-      };
-      this.messages.push(aiMessage);
-      this.isLoading = false;
-
-      // Auto-scroll to bottom
-      this.scrollToBottom();
-    }, 2000);
   }
+
+  // sendMessage(): void {
+  //   if (!this.input.trim() || this.isLoading) {
+  //     return;
+  //   }
+
+  //   const userMessage: Message = {
+  //     type: 'user',
+  //     content: this.input,
+  //     timestamp: new Date(),
+  //     tokens: this.tokenEstimate,
+  //     cost: this.costEstimate,
+  //   };
+
+  //   this.messages.push(userMessage);
+  //   const query = this.input;
+  //   this.input = '';
+  //   this.tokenEstimate = 0;
+  //   this.costEstimate = '0.0000';
+  //   this.isLoading = true;
+
+  //   this.clipService.query(query).subscribe((result: SemanticSearchResponseDto) => {});
+
+  //   // Simulate AI response
+  //   setTimeout(() => {
+  //     const aiMessage: Message = {
+  //       type: 'assistant',
+  //       content: 'This is a mock response. Replace this with your actual C# agent API call.',
+  //       timestamp: new Date(),
+  //     };
+  //     this.messages.push(aiMessage);
+  //     this.isLoading = false;
+
+  //     // Auto-scroll to bottom
+  //     this.scrollToBottom();
+  //   }, 2000);
+  // }
 
   useExampleQuery(query: string): void {
     this.input = query;
@@ -122,5 +185,10 @@ export class TranscriptChatComponent implements OnInit {
         container.scrollTop = container.scrollHeight;
       }
     }, 100);
+  }
+
+  convertMdToHtml(answer: string) {
+    const html = marked.parse(answer);
+    return html;
   }
 }
