@@ -22,6 +22,14 @@ export const routes: Routes = [
       ),
     title: 'Clip Details - Media Insight',
   },
+   {
+    path: 'transcript-chat',
+    loadComponent: () =>
+      import('./components/transcript-chat/transcript-chat.component').then(
+        (m) => m.TranscriptChatComponent
+      ),
+    title: 'Transcript Chat',
+  },
   {
     path: 'ai-detections',
     loadComponent: () =>

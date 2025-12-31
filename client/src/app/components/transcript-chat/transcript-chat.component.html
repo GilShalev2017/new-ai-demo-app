@@ -1,0 +1,172 @@
+<div class="chat-container">
+  <mat-sidenav-container class="sidenav-container">
+    <!-- Sidebar -->
+    <mat-sidenav mode="side" opened class="sidebar">
+      <div class="sidebar-content">
+        <!-- Logo Header -->
+        <div class="sidebar-header">
+          <div class="logo-container">
+            <div class="logo-icon">
+              <mat-icon>auto_awesome</mat-icon>
+            </div>
+            <div class="logo-text">
+              <h2>Transcript Agent</h2>
+              <p>AI-Powered Query System</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Help Button -->
+        <button mat-stroked-button color="accent" class="help-button" (click)="toggleHelp()">
+          <mat-icon>help_outline</mat-icon>
+          Help & Guide
+        </button>
+
+        <!-- Help Panel -->
+        
+        <div class="sidebar-middle">
+          <!-- Users Queries -->
+          <mat-card *ngIf="showHelp" class="examples-card">
+            <mat-card-header>
+              <mat-card-title>Available Queries</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+               <button
+                mat-button
+                class="user-query"
+                *ngFor="let query of userQueries"
+                (click)="useUserQuery(query)">
+                "{{ query }}"
+              </button>
+            </mat-card-content>
+          </mat-card>
+          <!-- Example Queries -->
+          <mat-card class="examples-card">
+            <mat-card-header>
+              <mat-card-title>Example Queries</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <button
+                mat-button
+                class="example-query"
+                *ngFor="let query of exampleQueries"
+                (click)="useExampleQuery(query)">
+                "{{ query }}"
+              </button>
+            </mat-card-content>
+          </mat-card>
+        </div>
+        <!-- Footer -->
+        <div class="sidebar-footer">
+          <div class="footer-info">
+            <mat-icon>bolt</mat-icon>
+            <span>Powered by AI</span>
+          </div>
+          <div class="version">v1.0.0</div>
+        </div>
+      </div>
+    </mat-sidenav>
+
+    <!-- Main Content -->
+    <mat-sidenav-content>
+      <div class="main-content">
+        <!-- Header Toolbar -->
+        <mat-toolbar color="primary" class="main-header">
+          <div class="header-content">
+            <div>
+              <h1 class="header-title">Chat with Your Transcripts</h1>
+              <p class="header-subtitle">Ask questions, get insights instantly</p>
+            </div>
+          </div>
+        </mat-toolbar>
+
+        <!-- Messages Area -->
+        <div class="messages-container">
+          <div class="messages-content">
+            <!-- Messages -->
+            <div
+              *ngFor="let msg of messages"
+              class="message-wrapper"
+              [ngClass]="'message-' + msg.type"
+            >
+              <mat-card class="message-card">
+                <mat-card-content>
+                  <p class="message-text">{{ msg.content }}</p>
+                  <div *ngIf="msg.tokens" class="message-meta">
+                    <mat-chip-set>
+                      <mat-chip>
+                        <mat-icon matChipAvatar>bolt</mat-icon>
+                        {{ msg.tokens }} tokens
+                      </mat-chip>
+                      <mat-chip>
+                        <mat-icon matChipAvatar>attach_money</mat-icon>
+                        ${{ msg.cost }}
+                      </mat-chip>
+                    </mat-chip-set>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+
+            <!-- Loading Indicator -->
+            <div *ngIf="isLoading" class="message-wrapper message-assistant">
+              <mat-card class="message-card loading-card">
+                <mat-card-content>
+                  <div class="loading-content">
+                    <mat-spinner diameter="24"></mat-spinner>
+                    <span>Analyzing transcripts...</span>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            </div>
+          </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-container">
+          <mat-card class="input-card">
+            <mat-card-content>
+              <!-- Token Estimate -->
+              <div *ngIf="tokenEstimate > 0" class="token-estimate">
+                <mat-chip-set>
+                  <mat-chip >
+                    <mat-icon matChipAvatar>bolt</mat-icon>
+                    <span style="color: white !important;">Estimated: {{ tokenEstimate }} tokens</span>
+                  </mat-chip>
+                  <mat-chip>
+                    <mat-icon matChipAvatar>attach_money</mat-icon>
+                    <span style="color: white !important;">Cost: ${{ costEstimate }}</span>
+                  </mat-chip>
+                </mat-chip-set>
+              </div>
+
+              <!-- Input Form -->
+              <div class="input-form">
+                <mat-form-field appearance="outline" class="input-field">
+                  <mat-label>Ask about your transcripts...</mat-label>
+                  <input
+                    matInput
+                    [(ngModel)]="input"
+                    (ngModelChange)="onInputChange()"
+                    (keyup.enter)="sendMessage()"
+                    [disabled]="isLoading"
+                  />
+                </mat-form-field>
+                <button
+                  mat-raised-button
+                  color="accent"
+                  class="send-button"
+                  (click)="sendMessage()"
+                  [disabled]="!input.trim() || isLoading"
+                  style="color: white !important;">
+                  <mat-icon>send</mat-icon>
+                  Send
+                </button>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        </div>
+      </div>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

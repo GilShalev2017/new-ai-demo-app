@@ -157,7 +157,7 @@ namespace Server.Controllers
             return Ok(new { message = $"Folder ingestion initiated for: {request.RootFolderPath}" });
         }
 
-        [HttpPost("Agent-semantic-search")]
+        [HttpPost("transcript-agent")]
         public async Task<IActionResult> SemanticSearch([FromBody] SemanticSearchDto request)
         {
            // var result = await _clipService.SemanticSearchAsync(request);

@@ -164,12 +164,10 @@ export interface CreateClipRequest {
   processAI?: boolean;
 }
 
-
-
 export interface InsightRequest {
   insightType: InsightType;
   PromptText?: string;
-  PromptName?:string;
+  PromptName?: string;
   language?: string;
   config?: any;
 }
@@ -184,7 +182,7 @@ export enum InsightType {
   ObjectDetection = 'ObjectDetection',
   ALPR = 'ALPR',
   Sentiment = 'Sentiment',
-  ChatGPTPrompt = 'ChatGPTPrompt'
+  ChatGPTPrompt = 'ChatGPTPrompt',
 }
 
 export interface InsightTypeOption {
@@ -193,4 +191,18 @@ export interface InsightTypeOption {
   icon: string;
   description: string;
   requiresLanguage: boolean;
+}
+
+export interface Message {
+  type: 'user' | 'assistant' | 'system';
+  content: string;
+  timestamp: Date;
+  tokens?: number;
+  cost?: string;
+}
+
+export interface TranscriptQueryResponse {
+  answer: string;
+  tokens: number;
+  cost: number;
 }

@@ -14,6 +14,7 @@ import {
   InsightRequest,
   ObjectDetection,
   SentimentData,
+  TranscriptQueryResponse,
 } from '../models/models';
 
 @Injectable({
@@ -180,11 +181,15 @@ export class ClipService {
 
   addInsights(clipId: string, insights: InsightRequest[]): Observable<Clip> {
     return this.http.put<Clip>(`${this.clipsApi}/${clipId}/addinsights`, insights).pipe(
-      map(clip => ({
+      map((clip) => ({
         ...clip,
         createdAt: new Date(clip.createdAt),
-        updatedAt: new Date(clip.updatedAt)
+        updatedAt: new Date(clip.updatedAt),
       }))
     );
+  }
+
+  query(query: string): Observable<TranscriptQueryResponse> {
+    return this.http.post<TranscriptQueryResponse>(`${this.clipsApi}/transcript-agent`, { query });
   }
 }

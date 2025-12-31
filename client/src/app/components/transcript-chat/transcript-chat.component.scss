@@ -1,0 +1,435 @@
+.chat-container {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  overflow: hidden; // Prevent outer scrolling
+}
+
+.sidenav-container {
+  width: 100%;
+  height: 100%;
+
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+// Sidebar Styles
+.sidebar {
+  width: 320px;
+
+  height: 100%;
+
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border-right: 1px solid rgba(123, 97, 255, 0.2);
+  overflow: hidden; // No scrollbar on sidebar
+}
+
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+
+  height: 100%; // Use full height
+  box-sizing: border-box;
+
+  padding: 24px;
+  overflow: hidden; // Prevent any overflow
+}
+
+.sidebar-header {
+  margin-bottom: 20px;
+  flex-shrink: 0; // Prevent shrinking
+}
+
+.sidebar-middle {
+  flex: 1 1 auto;
+  overflow-y: auto;
+}
+
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+
+  mat-icon {
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.logo-text {
+  h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 500;
+    color: white;
+  }
+
+  p {
+    margin: 0;
+    font-size: 11px;
+    color: #b794f4;
+  }
+}
+
+.help-button {
+  width: 100%;
+  margin-bottom: 16px;
+  border-color: rgba(123, 97, 255, 0.3);
+  color: #b794f4;
+  flex-shrink: 0; // Prevent shrinking
+}
+
+.help-card,
+.examples-card {
+  background: rgba(255, 255, 255, 0.05);
+  margin-bottom: 16px;
+  border: 1px solid rgba(123, 97, 255, 0.2);
+  flex-shrink: 1; // Allow shrinking if needed
+  overflow-y: auto; // Allow internal scrolling if content is too long
+  max-height: 300px; // Limit maximum height
+
+  ::ng-deep .mat-mdc-card-header {
+    padding: 16px 16px 8px;
+  }
+
+  ::ng-deep mat-card-title {
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  ::ng-deep mat-list-item {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 13px;
+  }
+}
+
+.example-query {
+  width: 100%;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 13px;
+  white-space: normal;
+  line-height: 1.4;
+  padding: 8px 12px;
+
+  &:hover {
+    background: rgba(123, 97, 255, 0.1);
+    color: white;
+  }
+}
+
+.user-query {
+  width: 100%;
+  text-align: left;
+  justify-content: flex-start !important;
+  color: purple !important;
+  font-size: 13px;
+  white-space: normal;
+  line-height: 1.4;
+  padding: 8px 12px;
+
+  &:hover {
+    background: rgba(123, 97, 255, 0.1);
+    color: white;
+  }
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 24px;
+  border-top: 1px solid rgba(123, 97, 255, 0.2);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  flex-shrink: 0; // Prevent shrinking
+}
+
+.footer-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.version {
+  color: #b794f4;
+}
+
+// Main Content Styles
+.main-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%; // Use full available height
+  background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+  overflow: hidden; // Prevent outer scrolling
+}
+
+.main-header {
+  background: rgba(0, 0, 0, 0.3) !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(123, 97, 255, 0.2);
+  flex-shrink: 0; // Prevent header from shrinking
+
+  padding: 15px 15px 15px 25px;
+  height: 100px;
+
+}
+
+.header-content {
+  width: 100%;
+}
+
+.header-title {
+  font-size: 24px;
+  font-weight: 500;
+  margin: 0;
+  color: white;
+}
+
+.header-subtitle {
+  color: #b794f4;
+  font-size: 14px;
+  margin: 4px 0 0 0;
+}
+
+// Messages Area - THIS IS THE SCROLLABLE PART
+.messages-container {
+  flex: 1; // Take remaining space
+  overflow-y: auto; // Only this area scrolls
+  overflow-x: hidden;
+  padding: 24px;
+  min-height: 0; // Important for flex child to be scrollable
+}
+
+.messages-content {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.message-wrapper {
+  margin-bottom: 16px;
+  display: flex;
+
+  &.message-user {
+    justify-content: flex-end;
+
+    .message-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+  }
+
+  &.message-assistant {
+    justify-content: flex-start;
+
+    .message-card {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(123, 97, 255, 0.2);
+    }
+  }
+
+  &.message-system {
+    justify-content: center;
+
+    .message-card {
+      background: rgba(123, 97, 255, 0.1);
+      border: 1px solid rgba(123, 97, 255, 0.3);
+      color: #b794f4;
+    }
+  }
+}
+
+.message-card {
+  max-width: 70%;
+
+  ::ng-deep mat-card-content {
+    padding: 16px;
+  }
+}
+
+.message-text {
+  margin: 0;
+  line-height: 1.6;
+  color: white;
+}
+
+.message-meta {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+
+  ::ng-deep mat-chip {
+    font-size: 11px;
+  }
+}
+
+.loading-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(123, 97, 255, 0.2);
+}
+
+.loading-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #b794f4;
+}
+
+// Input Area - Fixed at bottom
+.input-container {
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(123, 97, 255, 0.2);
+  flex-shrink: 0; // Prevent input area from shrinking
+}
+
+.input-card {
+  // max-width: 900px;
+  margin: 0 auto;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(123, 97, 255, 0.2);
+
+  ::ng-deep mat-card-content {
+    padding: 16px;
+  }
+}
+
+.token-estimate {
+  margin-bottom: 16px;
+  color: white;
+
+  ::ng-deep mat-chip {
+    font-size: 12px;
+    color: white !important;
+    .mat-icon {
+      color: white !important;
+    }
+  }
+}
+
+.input-form {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start; // Align items at the top
+}
+
+.input-field {
+  flex: 1;
+
+  ::ng-deep {
+    .mat-mdc-text-field-wrapper {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .mat-mdc-form-field-focus-overlay {
+      background: transparent;
+    }
+
+    input {
+      color: white;
+    }
+
+    .mat-mdc-form-field-label {
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    .mdc-notched-outline__leading,
+    .mdc-notched-outline__trailing,
+    .mdc-notched-outline__notch {
+      border-color: rgba(123, 97, 255, 0.3) !important;
+    }
+  }
+}
+
+.send-button {
+  min-width: 120px;
+  height: 56px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+
+  mat-icon {
+    margin-right: 8px;
+  }
+}
+
+// Custom scrollbar styling for messages container
+.messages-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(123, 97, 255, 0.5) rgba(0, 0, 0, 0.2);
+
+  &::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(123, 97, 255, 0.5);
+    border-radius: 4px;
+
+    &:hover {
+      background: rgba(123, 97, 255, 0.7);
+    }
+  }
+}
+
+// Also style sidebar scrollbar for help/examples cards
+.help-card,
+.examples-card {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(123, 97, 255, 0.5) rgba(0, 0, 0, 0.2);
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(123, 97, 255, 0.5);
+    border-radius: 3px;
+
+    &:hover {
+      background: rgba(123, 97, 255, 0.7);
+    }
+  }
+}
+
+mat-label {
+  color: white !important;
+}
+
+input {
+  color: white !important;
+}
+
+span {
+  color: white !important;
+}
+
+mat-card-avatar {
+  height: 20px !important;
+}
