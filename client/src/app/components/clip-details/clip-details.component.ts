@@ -28,7 +28,6 @@ import { AddChatGptInsightsDialogComponent } from '../add-chat-gpt-insights-dial
 })
 export class ClipDetailsComponent implements OnInit {
   clip: Clip | null = null;
-  // clip$!: Observable<Clip>;
   clipId: string | null = null;
   loading = true;
 
@@ -38,38 +37,6 @@ export class ClipDetailsComponent implements OnInit {
 
   // Splitter
   leftPaneSize = 60;
-
-  // Transcription data
-  transcriptionLines = [
-    { timestamp: '00:00', speaker: 'Reporter', text: "I'm going to be a video photographer." },
-    { timestamp: '00:03', speaker: 'Reporter', text: "I'm going to be a video photographer." },
-    { timestamp: '00:05', speaker: 'Reporter', text: "I'm going to be a video photographer." },
-    {
-      timestamp: '00:08',
-      speaker: 'Narrator',
-      text: "Ex formerly Twitter bought in 2022 by the world's richest man Elon Musk.",
-    },
-    {
-      timestamp: '00:14',
-      speaker: 'Narrator',
-      text: 'He vowed to purge illegal content from the platform.',
-    },
-    {
-      timestamp: '00:18',
-      speaker: 'Official',
-      text: 'The company told us it has zero tolerance for child sexual abuse material',
-    },
-    {
-      timestamp: '00:23',
-      speaker: 'Official',
-      text: 'and says it remains a top priority to tackle those who seek to exploit children on our platform.',
-    },
-    {
-      timestamp: '00:30',
-      speaker: 'Narrator',
-      text: 'Somewhere in Indonesia then, criminals profiting from images of child abuse.',
-    },
-  ];
 
   // Celebrities/Personalities
   celebrities = [
