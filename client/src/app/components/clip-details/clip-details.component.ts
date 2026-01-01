@@ -18,12 +18,13 @@ import { AddInsightsDialogComponent } from '../add-insights-dialog/add-insights-
 import { InsightRequest } from '../../models/models';
 import { AddChatGptInsightsDialogComponent } from '../add-chat-gpt-insights-dialog/add-chat-gpt-insights-dialog.component';
 import * as vision from '@mediapipe/tasks-vision';
+import { FormsModule } from '@angular/forms';
 const { FaceLandmarker, FilesetResolver } = vision;
 
 @Component({
   selector: 'app-clip-details',
   standalone: true,
-  imports: [CommonModule, MaterialModule],
+  imports: [CommonModule, FormsModule, MaterialModule],
   templateUrl: './clip-details.component.html',
   styleUrls: ['./clip-details.component.scss'],
 })
@@ -79,6 +80,7 @@ export class ClipDetailsComponent implements OnDestroy, OnInit, AfterViewInit {
   private canvasCtx!: CanvasRenderingContext2D;
   private animationFrameId: number | null = null;
   private lastVideoTime: number = -1;
+  showFaceDetection = true;
 
   constructor(
     private route: ActivatedRoute,
@@ -498,7 +500,9 @@ export class ClipDetailsComponent implements OnDestroy, OnInit, AfterViewInit {
     // If face detection is ready, start predicting
     if (this.faceLandmarkerReady && this.faceLandmarker) {
       console.log('Starting face detection on play');
-      this.predictVideoFrame();
+      if (this.showFaceDetection) {
+        this.predictVideoFrame();
+      }
     }
 
     // Update the play state
@@ -570,6 +574,9 @@ export class ClipDetailsComponent implements OnDestroy, OnInit, AfterViewInit {
   };
 
   private predictVideoFrame(forceDetection: boolean = false): void {
+    if (this.showFaceDetection === false) {
+      return;
+    }
     // If we're not playing and not forcing detection, just return
     if (!this.isPlaying && !forceDetection) {
       return;
@@ -702,5 +709,28 @@ export class ClipDetailsComponent implements OnDestroy, OnInit, AfterViewInit {
     });
 
     el.innerHTML = htmlMaker;
+  }
+  onFaceDetectionToggle(): void {
+    if (this.showFaceDetection === true) {
+      // If turning on, start detection if video is playing
+      if (this.videoPlayer?.nativeElement && !this.videoPlayer.nativeElement.paused) {
+        this.predictVideoFrame(true);
+      }
+    } else {
+      // If turning off, clear the canvas
+      if (this.canvasRef?.nativeElement && this.canvasCtx) {
+        this.canvasCtx.clearRect(
+          0,
+          0,
+          this.canvasRef.nativeElement.width,
+          this.canvasRef.nativeElement.height
+        );
+      }
+      // Cancel any pending animation frames
+      if (this.animationFrameId) {
+        cancelAnimationFrame(this.animationFrameId);
+        this.animationFrameId = null;
+      }
+    }
   }
 }

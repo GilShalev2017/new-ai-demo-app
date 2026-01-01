@@ -1,6 +1,5 @@
-<div class="clip-details-container" >
-
-<!-- *ngIf="!loading && clip"> -->
+<div class="clip-details-container">
+  <!-- *ngIf="!loading && clip"> -->
   <!-- Header with back button -->
   <div class="clip-header">
     <button mat-icon-button (click)="goBack()" class="back-button">
@@ -298,7 +297,6 @@
 
     <!-- Right Panel - Video Player -->
     <div class="right-panel" [style.width.%]="100 - leftPaneSize">
-
       <div class="video-container">
         <video
           #videoPlayer
@@ -310,7 +308,8 @@
           (pause)="onVideoPause()"
           (loadedmetadata)="onVideoLoadedMetadata()"
           controls
-          class="video-player">
+          class="video-player"
+        >
           Your browser does not support the video tag.
         </video>
         <canvas #outputCanvas class="output_canvas"></canvas>
@@ -318,7 +317,16 @@
 
       <!-- Actions Section -->
       <div class="actions-section">
-        <h3>Actions</h3>
+        <div class="actions-header">
+          <h3>Actions</h3>
+          <mat-checkbox
+            class="show-fd-checkbox"
+            [(ngModel)]="showFaceDetection"
+            (change)="onFaceDetectionToggle()"
+            color="primary">
+            Display Face Landmarks
+          </mat-checkbox>
+        </div>
         <div class="action-buttons">
           <button mat-flat-button color="primary" (click)="addClipInsights()">
             <mat-icon>add</mat-icon>
