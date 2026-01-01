@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MaterialModule } from '../../shared/material.module';
@@ -12,12 +12,13 @@ import {
   TranscriptionInsight,
 } from '../../models/models';
 import { ChangeDetectorRef } from '@angular/core';
-import { Observable } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { MatDialog } from '@angular/material/dialog';
 import { AddInsightsDialogComponent } from '../add-insights-dialog/add-insights-dialog.component';
 import { InsightRequest } from '../../models/models';
 import { AddChatGptInsightsDialogComponent } from '../add-chat-gpt-insights-dialog/add-chat-gpt-insights-dialog.component';
+import * as vision from '@mediapipe/tasks-vision';
+const { FaceLandmarker, FilesetResolver } = vision;
 
 @Component({
   selector: 'app-clip-details',
@@ -26,19 +27,14 @@ import { AddChatGptInsightsDialogComponent } from '../add-chat-gpt-insights-dial
   templateUrl: './clip-details.component.html',
   styleUrls: ['./clip-details.component.scss'],
 })
-export class ClipDetailsComponent implements OnInit {
+export class ClipDetailsComponent implements OnDestroy, OnInit, AfterViewInit {
   clip: Clip | null = null;
   clipId: string | null = null;
   loading = true;
-
-  // View options
   selectedTab = 'transcription';
   viewMode: 'single' | 'double' = 'single';
-
-  // Splitter
   leftPaneSize = 60;
 
-  // Celebrities/Personalities
   celebrities = [
     { name: 'Elon Musk', role: 'Entrepreneur, owner of Twitter', nationality: 'American' },
     { name: 'Angus Crawford', role: 'Reporter for BBC News', nationality: 'British' },
@@ -46,8 +42,6 @@ export class ClipDetailsComponent implements OnInit {
     { name: 'Joe Robertson', role: 'Member of Parliament', nationality: 'British' },
     { name: 'Dave Jones', role: 'Chief Analyst at Ember', nationality: 'Unknown' },
   ];
-
-  // Locations
   locations = [
     {
       name: 'Indonesia',
@@ -66,11 +60,25 @@ export class ClipDetailsComponent implements OnInit {
 
   isErrorProcessing: boolean = false;
   isTranslating: boolean = false;
-  @ViewChild('videoPlayer') videoPlayer!: ElementRef<HTMLVideoElement>;
   currentTime = 0;
   isSync = true;
   activeTranscriptIndex: number | null = null;
   processingInsights = new Set<string>();
+
+  @ViewChild('videoPlayer') videoPlayer!: ElementRef<HTMLVideoElement>;
+  @ViewChild('outputCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('videoProgress') videoProgressRef!: ElementRef<HTMLInputElement>;
+  @ViewChild('videoBlendShapes') videoBlendShapesRef!: ElementRef<HTMLUListElement>;
+  private faceLandmarker!: vision.FaceLandmarker;
+  public faceLandmarkerReady: boolean = false;
+  public videoLoaded: boolean = false;
+  public isPlaying: boolean = false;
+  public videoDuration: number = 0;
+  public videoCurrentTime: number = 0;
+  private drawingUtils!: vision.DrawingUtils;
+  private canvasCtx!: CanvasRenderingContext2D;
+  private animationFrameId: number | null = null;
+  private lastVideoTime: number = -1;
 
   constructor(
     private route: ActivatedRoute,
@@ -90,8 +98,6 @@ export class ClipDetailsComponent implements OnInit {
 
   loadClip(id: string): void {
     this.loading = true;
-
-    // this.clip$ = this.clipService.getClipById(id);
 
     this.clipService.getClipById(id).subscribe({
       next: (clip) => {
@@ -123,14 +129,11 @@ export class ClipDetailsComponent implements OnInit {
     // Handle splitter drag if needed
   }
 
-  // Action buttons
-
   manageInsights(): void {
     console.log('Manage Insights');
   }
 
   chatGPTPrompts(): void {
-    //NEW CODE
     const dialogRef = this.dialog.open(AddChatGptInsightsDialogComponent, {
       width: '1000px',
       maxWidth: '95vw',
@@ -172,7 +175,10 @@ export class ClipDetailsComponent implements OnInit {
     console.log('Translate Transcript');
   }
 
-  formatDuration(seconds: number): string {
+  formatDuration(seconds?: number): string {
+    if (seconds === undefined || seconds === null) {
+      return '0:00';
+    }
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
     return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -183,9 +189,6 @@ export class ClipDetailsComponent implements OnInit {
     return `${serverUrl}${videoUrl}`;
   }
 
-  /**
-   * Returns array-based insights: Transcription, Celebrities, Locations
-   */
   getInsightArray(insightType: 'Transcription' | 'Celebrities' | 'Locations'): any[] {
     if (!this.clip?.insights) return [];
 
@@ -204,9 +207,6 @@ export class ClipDetailsComponent implements OnInit {
     }
   }
 
-  /**
-   * Returns string-based insight: Summary
-   */
   getInsightString(insightType: 'Summary'): string {
     if (!this.clip?.insights) return '';
 
@@ -216,14 +216,9 @@ export class ClipDetailsComponent implements OnInit {
     return (insight as SummaryInsight).summary || '';
   }
 
-  /**
-   * Delete a specific insight type
-   * @param insightType The type of insight to delete (e.g., 'Transcription', 'Summary', 'Celebrities', 'Locations')
-   */
   deleteInsight(insightType: string): void {
     if (!this.clip || !this.clipId) return;
 
-    // Find the insight(s) with this type
     const insightsToDelete =
       this.clip.insights?.filter((insight) => insight.insightType === insightType) || [];
 
@@ -232,10 +227,8 @@ export class ClipDetailsComponent implements OnInit {
       return;
     }
 
-    // Get insight IDs
     const insightIds = insightsToDelete.map((insight) => insight.id);
 
-    // Confirm deletion
     const confirmMessage = `Are you sure you want to delete ${insightType} insight${
       insightsToDelete.length > 1 ? 's' : ''
     }?`;
@@ -244,7 +237,6 @@ export class ClipDetailsComponent implements OnInit {
       return;
     }
 
-    // Call API to delete
     this.clipService.removeInsights(this.clipId, insightIds).subscribe({
       next: () => {
         // Remove from local clip object
@@ -264,55 +256,30 @@ export class ClipDetailsComponent implements OnInit {
     });
   }
 
-  /**
-   * Delete the transcription insight
-   */
   deleteTranscription(): void {
     this.deleteInsight('Transcription');
   }
 
-  /**
-   * Delete the summary insight
-   */
   deleteSummary(): void {
     this.deleteInsight('Summary');
   }
 
-  /**
-   * Delete the celebrities insight
-   */
   deleteCelebrities(): void {
     this.deleteInsight('Celebrities');
   }
 
-  /**
-   * Delete the locations insight
-   */
   deleteLocations(): void {
     this.deleteInsight('Locations');
   }
 
-  /**
-   * Delete the demo insight
-   */
   deleteDemoInsight(): void {
     this.deleteInsight('DemoInsight');
   }
 
-  // ============================================
-  // HELPER METHODS
-  // ============================================
-
-  /**
-   * Check if a specific insight type exists
-   */
   hasInsight(insightType: string): boolean {
     return this.clip?.insights?.some((insight) => insight.insightType === insightType) || false;
   }
 
-  /**
-   * Open dialog to add new insights
-   */
   addClipInsights(): void {
     if (!this.clip || !this.clipId) return;
 
@@ -328,9 +295,6 @@ export class ClipDetailsComponent implements OnInit {
     });
   }
 
-  /**
-   * Process adding insights via API
-   */
   private processAddInsights(insights: InsightRequest[]): void {
     if (!this.clipId) return;
 
@@ -390,15 +354,6 @@ export class ClipDetailsComponent implements OnInit {
   }
 
   scrollToActiveTranscript(): void {
-    // const container = document.querySelector('.transcript-container') as HTMLElement;
-
-    // const activeLine = document.querySelector('.transcript-line.activeTranscript') as HTMLElement;
-
-    // if (!container || !activeLine) return;
-
-    // const offset = activeLine.offsetTop - container.offsetTop - 80;
-
-    // container.scrollTop = offset;
     const activeLine = document.querySelector('.transcript-line.activeTranscript') as HTMLElement;
 
     if (!activeLine) return;
@@ -454,5 +409,298 @@ export class ClipDetailsComponent implements OnInit {
 
   clearInsightsProcessing(insights: InsightRequest[]) {
     insights.forEach((i) => this.processingInsights.delete(i.insightType));
+  }
+
+  ngAfterViewInit(): void {
+    if (!this.videoPlayer || !this.canvasRef) {
+      console.error(
+        'VideoFileFaceDetectionComponent: Missing required elements - videoPlayer:',
+        !!this.videoPlayer,
+        'canvasRef:',
+        !!this.canvasRef
+      );
+      return;
+    }
+
+    const canvasElement = this.canvasRef.nativeElement;
+
+    this.canvasCtx = canvasElement.getContext('2d')!;
+
+    this.drawingUtils = new vision.DrawingUtils(this.canvasCtx);
+
+    // Initialize face landmarker
+    this.createFaceLandmarker()
+      .then(() => {
+        console.log('Face landmarker initialization complete');
+      })
+      .catch((error: any) => {
+        console.error('Error initializing face landmarker:', error);
+      });
+  }
+
+  async createFaceLandmarker(): Promise<void> {
+    try {
+      const filesetResolver = await FilesetResolver.forVisionTasks(
+        'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.3/wasm'
+      );
+
+      this.faceLandmarker = await vision.FaceLandmarker.createFromOptions(filesetResolver, {
+        baseOptions: {
+          modelAssetPath: `https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task`,
+          delegate: 'CPU', //'GPU',
+        },
+        outputFaceBlendshapes: true,
+        runningMode: 'VIDEO',
+        numFaces: 10,
+        minFaceDetectionConfidence: 0.3, // Lower confidence threshold for more sensitive detection
+      });
+
+      if (this.faceLandmarker) {
+        this.faceLandmarkerReady = true;
+        console.log('FaceLandmarker initialized successfully');
+      } else {
+        throw new Error('FaceLandmarker initialization failed');
+      }
+
+      this.cdr.detectChanges();
+    } catch (error) {
+      console.error('Error creating FaceLandmarker:', error);
+      this.faceLandmarkerReady = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  ngOnDestroy(): void {
+    // Remove resize listener
+    window.removeEventListener('resize', this.handleResize);
+
+    // Stop any ongoing animation frame
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+
+    // Close face landmarker if it exists
+    if (this.faceLandmarker) {
+      this.faceLandmarker.close();
+    }
+
+    // Clean up video source if needed
+    if (this.videoPlayer?.nativeElement?.src) {
+      URL.revokeObjectURL(this.videoPlayer.nativeElement.src);
+    }
+  }
+
+  onVideoPlay(): void {
+    console.log('Video play event triggered');
+    this.isPlaying = true;
+
+    // If face detection is ready, start predicting
+    if (this.faceLandmarkerReady && this.faceLandmarker) {
+      console.log('Starting face detection on play');
+      this.predictVideoFrame();
+    }
+
+    // Update the play state
+    this.cdr.detectChanges();
+  }
+
+  onVideoPause(): void {
+    console.log('Video pause event triggered');
+    this.isPlaying = false;
+
+    // Stop any ongoing face detection
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
+      this.animationFrameId = null;
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  onVideoLoadedMetadata(): void {
+    console.log('onVideoLoadedMetadata called');
+    if (!this.videoPlayer) {
+      console.error('onVideoLoadedMetadata: Missing videoPlayerRef');
+      return;
+    }
+
+    const video = this.videoPlayer.nativeElement;
+    console.log('Video duration:', video.duration);
+    this.videoDuration = video.duration;
+    this.videoCurrentTime = video.currentTime;
+
+    // Set canvas dimensions to match video dimensions
+    if (!this.canvasRef) {
+      console.error('onVideoLoadedMetadata: Missing canvasRef');
+      return;
+    }
+
+    const canvasElement = this.canvasRef.nativeElement;
+    canvasElement.width = video.videoWidth;
+    canvasElement.height = video.videoHeight;
+
+    // Set up resize handling
+    this.handleResize();
+    window.addEventListener('resize', this.handleResize);
+
+    // If video is already playing (e.g., autoplay), start face detection
+    if (!video.paused && this.faceLandmarkerReady && this.faceLandmarker) {
+      console.log('Video already playing, starting face detection');
+      this.isPlaying = true;
+      this.predictVideoFrame();
+    }
+
+    this.cdr.detectChanges();
+  }
+
+  private handleResize = (): void => {
+    if (!this.videoPlayer || !this.canvasRef) return;
+
+    const video = this.videoPlayer.nativeElement;
+    const canvas = this.canvasRef.nativeElement;
+
+    // Calculate new dimensions while maintaining aspect ratio
+    const aspectRatio = video.videoWidth / video.videoHeight;
+    const containerWidth = video.parentElement?.clientWidth || video.videoWidth;
+    const containerHeight = containerWidth / aspectRatio;
+
+    canvas.width = containerWidth;
+    canvas.height = containerHeight;
+  };
+
+  private predictVideoFrame(forceDetection: boolean = false): void {
+    // If we're not playing and not forcing detection, just return
+    if (!this.isPlaying && !forceDetection) {
+      return;
+    }
+
+    // Check if we have all required elements and they're ready
+    if (
+      !this.videoPlayer?.nativeElement ||
+      !this.canvasRef?.nativeElement ||
+      !this.faceLandmarker ||
+      !this.drawingUtils
+    ) {
+      // If we're supposed to be playing, schedule a retry
+      if (this.isPlaying) {
+        this.animationFrameId = requestAnimationFrame(() => this.predictVideoFrame(forceDetection));
+      }
+      return;
+    }
+
+    const video = this.videoPlayer.nativeElement;
+    const canvasElement = this.canvasRef.nativeElement;
+
+    // Make sure video has valid dimensions
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      if (this.isPlaying) {
+        this.animationFrameId = requestAnimationFrame(() => this.predictVideoFrame(forceDetection));
+      }
+      return;
+    }
+
+    // Update canvas dimensions to match video if needed
+    if (canvasElement.width !== video.videoWidth || canvasElement.height !== video.videoHeight) {
+      canvasElement.width = video.videoWidth;
+      canvasElement.height = video.videoHeight;
+    }
+
+    try {
+      // Only detect if the video time has changed or if forced
+      const currentTime = video.currentTime;
+      if (this.lastVideoTime !== currentTime || forceDetection) {
+        this.lastVideoTime = currentTime;
+
+        // Perform face detection
+        const startTimeMs = performance.now();
+        const results = this.faceLandmarker.detectForVideo(video, startTimeMs);
+
+        // Draw results if we have a valid canvas context
+        if (this.canvasCtx) {
+          this.canvasCtx.save();
+          this.canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+
+          // Draw face landmarks if detected
+          if (results.faceLandmarks && results.faceLandmarks.length > 0) {
+            for (const landmarks of results.faceLandmarks) {
+              // Draw face mesh
+              this.drawingUtils.drawConnectors(
+                landmarks,
+                vision.FaceLandmarker.FACE_LANDMARKS_TESSELATION,
+                { color: '#C0C0C070', lineWidth: 1 }
+              );
+
+              // Draw eyes
+              this.drawingUtils.drawConnectors(
+                landmarks,
+                vision.FaceLandmarker.FACE_LANDMARKS_RIGHT_EYE,
+                // { color: '#FF3030' }
+                { color: 'blue' }
+              );
+              this.drawingUtils.drawConnectors(
+                landmarks,
+                vision.FaceLandmarker.FACE_LANDMARKS_LEFT_EYE,
+                //{ color: '#30FF30' }
+                { color: 'blue' }
+              );
+
+              // Draw face oval
+              this.drawingUtils.drawConnectors(
+                landmarks,
+                vision.FaceLandmarker.FACE_LANDMARKS_FACE_OVAL,
+                { color: '#E0E0E0' }
+              );
+
+              // Draw lips
+              this.drawingUtils.drawConnectors(
+                landmarks,
+                vision.FaceLandmarker.FACE_LANDMARKS_LIPS,
+                //{ color: '#E0E0E0' }
+                { color: 'red' }
+              );
+            }
+          }
+          this.canvasCtx.restore();
+        }
+
+        // Update blend shapes if available
+        if (this.videoBlendShapesRef?.nativeElement && results.faceBlendshapes) {
+          this.drawBlendShapes(this.videoBlendShapesRef.nativeElement, results.faceBlendshapes);
+        }
+      }
+
+      // Schedule next frame if still playing
+      if (this.isPlaying) {
+        this.animationFrameId = requestAnimationFrame(() => this.predictVideoFrame(forceDetection));
+      }
+    } catch (error) {
+      console.error('Error during face detection:', error);
+      // Even if there's an error, try to continue with the next frame
+      if (this.isPlaying) {
+        this.animationFrameId = requestAnimationFrame(() => this.predictVideoFrame(forceDetection));
+      }
+    }
+  }
+
+  drawBlendShapes(el: HTMLElement, blendShapes: any[]): void {
+    if (!blendShapes || !blendShapes.length) {
+      el.innerHTML = '';
+      return;
+    }
+
+    let htmlMaker = '';
+    blendShapes[0].categories.map((shape: any) => {
+      htmlMaker += `
+        <li class="blend-shapes-item">
+          <span class="blend-shapes-label">${shape.displayName || shape.categoryName}</span>
+          <span class="blend-shapes-value" style="width: calc(${
+            +shape.score * 100
+          }% - 120px)">${(+shape.score).toFixed(4)}</span>
+        </li>
+      `;
+    });
+
+    el.innerHTML = htmlMaker;
   }
 }

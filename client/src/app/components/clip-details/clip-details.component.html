@@ -1,11 +1,12 @@
-<!-- <div class="clip-details-container" *ngIf="clip$ | async as clip"> -->
-<div class="clip-details-container" *ngIf="!loading && clip">
+<div class="clip-details-container" >
+
+<!-- *ngIf="!loading && clip"> -->
   <!-- Header with back button -->
   <div class="clip-header">
     <button mat-icon-button (click)="goBack()" class="back-button">
       <mat-icon>arrow_back</mat-icon>
     </button>
-    <h1 class="clip-title">{{ clip.title }}</h1>
+    <h1 class="clip-title">{{ clip?.title }}</h1>
   </div>
 
   <!-- Main content with splitter -->
@@ -15,12 +16,11 @@
       <!-- Toolbar -->
       <mat-toolbar class="insights-toolbar">
         <div class="toolbar-left">
-          <span class="clip-meta">
-            Broadcast Time: {{ clip.broadcastStartTime | date : 'MMM d, y · HH:mm' }}
+          <span class="clip-meta" *ngIf="clip">
+            Broadcast Time: {{ clip!.broadcastStartTime | date : 'MMM d, y · HH:mm' }}
             –
-            {{ clip.broadcastEndTime | date : 'HH:mm' }}
-            <span class="clip-meta"> ({{formatDuration(clip.duration)}})</span>
-            <!-- ({{ clip.duration | number : '1.0-0' }}s)  -->
+            {{ clip!.broadcastEndTime | date : 'HH:mm' }}
+            <span class="clip-meta"> ({{ formatDuration(clip!.duration) }})</span>
           </span>
         </div>
 
@@ -298,22 +298,22 @@
 
     <!-- Right Panel - Video Player -->
     <div class="right-panel" [style.width.%]="100 - leftPaneSize">
-      <!-- Video Player -->
+
       <div class="video-container">
         <video
           #videoPlayer
-          [src]="getVideoUrl(clip.videoUrl)"
+          playsinline
+          crossorigin="use-credentials"
+          [src]="clip?.videoUrl ? getVideoUrl(clip!.videoUrl) : ''"
           (timeupdate)="onTimeUpdate()"
+          (play)="onVideoPlay()"
+          (pause)="onVideoPause()"
+          (loadedmetadata)="onVideoLoadedMetadata()"
           controls
-          class="video-player"
-        >
+          class="video-player">
           Your browser does not support the video tag.
         </video>
-
-        <!-- <div class="video-info">
-          <span class="video-channel">📺 {{ clip.channelName }}</span>
-          <span class="video-date">{{ clip.createdAt | date : 'medium' }}</span>
-        </div> -->
+        <canvas #outputCanvas class="output_canvas"></canvas>
       </div>
 
       <!-- Actions Section -->
@@ -357,7 +357,7 @@
         <h3>Tags</h3>
         <div class="tags-container">
           <mat-chip-set>
-            <mat-chip *ngFor="let tag of clip.tags" [removable]="true">
+            <mat-chip *ngFor="let tag of clip?.tags" [removable]="true">
               {{ tag }}
               <mat-icon matChipRemove>cancel</mat-icon>
             </mat-chip>
@@ -376,7 +376,7 @@
             <mat-icon>tv</mat-icon>
             <div class="info-details">
               <span class="info-label">Channel</span>
-              <span class="info-value">{{ clip.channelName }}</span>
+              <span class="info-value">{{ clip?.channelName }}</span>
             </div>
           </div>
 
@@ -384,7 +384,7 @@
             <mat-icon>schedule</mat-icon>
             <div class="info-details">
               <span class="info-label">Duration</span>
-              <span class="info-value">{{ formatDuration(clip.duration) }}</span>
+              <span class="info-value">{{ formatDuration(clip?.duration) }}</span>
             </div>
           </div>
 

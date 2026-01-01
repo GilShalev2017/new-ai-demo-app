@@ -4,7 +4,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatSelect, MatSelectChange, MatOption } from '@angular/material/select';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialog } from '@angular/material/dialog';
-import { SnackbarService } from '../../services/snackbar-service';
 import { ClipService } from '../../services/clip.service';
 import { MaterialModule } from '../../shared/material.module';
 import { marked } from 'marked';
@@ -46,7 +45,6 @@ export class AddChatGptInsightsDialogComponent {
     public dialogRef: MatDialogRef<AddChatGptInsightsDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: DialogData,
     private dialog: MatDialog,
-    private snackbar: SnackbarService,
     private clipService: ClipService,
     private cdr: ChangeDetectorRef
   ) {}
