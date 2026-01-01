@@ -285,6 +285,14 @@ namespace Server.Services
                 .Select(w => Regex.Replace(w, @"[^\w\d]", "_")); // remove invalid chars
 
             return $"{string.Join("_", words)}_{channel}.mp4";
+
+            //TODO SHOULD BE
+            //var words = Path.GetFileNameWithoutExtension(originalName)
+            //   .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            //   .Take(6)
+            //   .Select(w => Regex.Replace(w, @"[^\w\d]", " ")); // remove invalid chars
+
+            //return $"{string.Join("_", words)}.mp4";
         }
         private (DateTime startUtc, DateTime endUtc)? TryReadBroadcastTimes(string videoPath)
         {

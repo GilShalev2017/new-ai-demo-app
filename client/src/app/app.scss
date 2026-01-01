@@ -120,8 +120,8 @@
   a.mat-list-item {
     padding-left: 52px;
     height: 40px;
-    font-size: 14px;
-    color: #555;
+    // font-size: 14px;
+    color: orange;
     transition: all 0.2s;
 
     mat-icon {
@@ -156,7 +156,7 @@
 // Main Content Area
 // ============================================
 .main-content {
-  flex:1;
+  flex: 1;
   min-height: 0;
   overflow: hidden;
   background-color: #f5f7fa;
@@ -193,4 +193,14 @@
       height: 24px;
     }
   }
+}
+
+.list-item-content {
+  display: flex;
+  align-items: center;
+  gap: 8px; // spacing between icon and text
+}
+
+.list-icon {
+  color: orange;
 }

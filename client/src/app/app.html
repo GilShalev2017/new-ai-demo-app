@@ -60,23 +60,41 @@
 
           <div class="nav-subsection" *ngIf="mediaInsightExpanded">
             <a mat-list-item routerLink="/clips" routerLinkActive="active-link">
-              <mat-icon>video_library</mat-icon>
-              <span>Clips</span>
+              <div style="display: flex; align-items: center">
+                <mat-icon style="color: orange; margin-right: 5px">video_library</mat-icon>
+                <span>Clips</span>
+              </div>
             </a>
 
             <a mat-list-item routerLink="/transcript-chat" routerLinkActive="active-link">
-              <mat-icon>text_rotate_vertical</mat-icon>
-              <span>Transcript Agent</span>
+              <div style="display: flex; align-items: center; ">
+                <mat-icon style="color: orange;margin-right: 5px">text_rotate_vertical</mat-icon>
+                <span>Transcript Agent</span>
+              </div>
             </a>
 
-            <a mat-list-item routerLink="/ai-detections" routerLinkActive="active-link">
-              <mat-icon>search</mat-icon>
-              <span>AI Detections</span>
+            <a
+              mat-list-item
+              routerLink="/ai-detections"
+              routerLinkActive="active-link"
+              class="list-item-content"
+            >
+              <div style="display: flex; align-items: center;">
+                <mat-icon style="color: orange;margin-right: 5px">search</mat-icon>
+                <span>AI Detections</span>
+              </div>
             </a>
 
-            <a mat-list-item routerLink="/scheduled-items" routerLinkActive="active-link">
-              <mat-icon>schedule</mat-icon>
-              <span>Scheduled Items</span>
+            <a
+              mat-list-item
+              routerLink="/scheduled-items"
+              routerLinkActive="active-link"
+              style="display: flex"
+            >
+              <div style="display: flex; align-items: center; ">
+                <mat-icon style="color: orange;margin-right: 5px">schedule</mat-icon>
+                <span>Scheduled Items</span>
+              </div>
             </a>
           </div>
         </div>

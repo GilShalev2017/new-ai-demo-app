@@ -203,44 +203,48 @@
 .category-toolbar {
   display: flex;
   align-items: center;
-  overflow: hidden;
   flex: 1;
-  max-width: 60%;
+  overflow: hidden;
+  max-width: 100%;
+  position: relative;
+  padding: 0 8px;
 }
 
 .category-container {
   display: flex;
-  gap: 8px;
-  white-space: nowrap;
-  max-width: 100%;
-  overflow-x: hidden;
-  transition: transform 0.3s ease;
+  overflow-x: auto;
+  scroll-behavior: smooth;
   padding: 8px 0;
+  gap: 8px;
+  max-width: calc(100vw - 500px); /* Adjust based on your layout */
+  min-height: 48px;
+  align-items: center;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+  &::-webkit-scrollbar {
+    display: none;  /* Hide scrollbar for Chrome, Safari and Opera */
+  }
 }
 
 .category {
-  display: inline-flex;
-  align-items: center;
-  padding: 7px 16px;
-  border-radius: 20px;
+  flex: 0 0 auto;
+  padding: 4px 12px;
+  border-radius: 16px;
+  background-color: #f0f0f0;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.2s;
-  min-height: 32px;
   font-size: 14px;
-  font-weight: 500;
-  background: #f8f9fa;
-  border: 1px solid #dee2e6;
-  color: #495057;
+  margin: 0 4px;
+  box-sizing: border-box;
 
   &:hover {
-    background: #e9ecef;
-    border-color: #adb5bd;
+    background-color: #e0e0e0;
   }
 
   &.selected {
-    background: #5f6cba;
+    background-color: #5f6cba;
     color: white;
-    border-color: #5f6cba;
   }
 }
 
