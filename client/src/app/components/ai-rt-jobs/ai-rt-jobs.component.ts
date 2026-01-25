@@ -35,16 +35,19 @@ export class AiRtJobsComponent implements OnInit {
   constructor(
     private dialog: MatDialog,
     private aiService: AiService,
-    private snackBar: MatSnackBar) {}
+    private snackBar: MatSnackBar,
+  ) {}
 
   ngOnInit(): void {}
 
   addRTJob() {
     const dialogRef = this.dialog.open(AddNewJobComponent, {
-      disableClose: true,
+      // disableClose: true,
       data: { jobType: 'batch' },
-      width: '800px',
-      maxWidth: '95vw',
+      panelClass: 'ai-job-dialog',
+      width: '750px',
+      maxHeight: '90vh',
+      maxWidth: '90vw',
     });
     dialogRef
       .afterClosed()
@@ -90,11 +93,10 @@ export class AiRtJobsComponent implements OnInit {
               job.ChannelIds?.map((chnl) => this.getChannelById(chnl)).filter((ch) => ch != null) ??
               [];
             const availNots = this.aiService.availableNotifications;
-            const notifications = (
-              job?.NotificationIds
-                ?.map((id) => availNots.find((n) => n.Id == id)?.Name)
-                .filter((name): name is string => name !== undefined) ?? []
-            );
+            const notifications =
+              job?.NotificationIds?.map((id) => availNots.find((n) => n.Id == id)?.Name).filter(
+                (name): name is string => name !== undefined,
+              ) ?? [];
 
             job.RunHistory.forEach((h) => {
               h.errors =
