@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { MaterialModule } from '../../shared/material.module';
 import { HttpErrorResponse } from '@angular/common/http';
 import { map, Subject, takeUntil } from 'rxjs';
-import { AddNewJobComponent } from '../add-new-job/add-new-job';
+import { AddNewJobComponent } from '../add-new-job/add-new-job.component';
 import { MatDialog } from '@angular/material/dialog';
 import { AiService } from '../../services/ai.service';
 import {
@@ -16,7 +16,7 @@ import {
 } from '../../models/models';
 import { MatSnackBar } from '@angular/material/snack-bar';
 @Component({
-  selector: 'app-scheduled-items',
+  selector: 'app-ai-jobs',
   standalone: true,
   imports: [CommonModule, MaterialModule],
   templateUrl: './ai-rt-jobs.component.html',
@@ -43,6 +43,8 @@ export class AiRtJobsComponent implements OnInit {
     const dialogRef = this.dialog.open(AddNewJobComponent, {
       disableClose: true,
       data: { jobType: 'batch' },
+      width: '800px',
+      maxWidth: '95vw',
     });
     dialogRef
       .afterClosed()

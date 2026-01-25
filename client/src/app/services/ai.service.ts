@@ -3,7 +3,7 @@
 // ============================================
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, map } from 'rxjs';
+import { BehaviorSubject, Observable, map } from 'rxjs';
 import {
   ALPRData,
   Clip,
@@ -18,6 +18,8 @@ import {
   AiJobRequest,
   JobRequestFilter,
   NotificationDefinition,
+  InsightTypeDefinition,
+  LanguageDm,
 } from '../models/models';
 
 @Injectable({
@@ -32,6 +34,9 @@ export class AiService {
   /** API base (proxied) */
   private readonly clipsApi = '/api/clips';
   public availableNotifications: NotificationDefinition[] = [];
+  availableInsightTypeDefinitions: InsightTypeDefinition[] = [];
+  public languagesSubject = new BehaviorSubject<LanguageDm[]>([]);
+  public providerLanguages$ = this.languagesSubject.asObservable();
 
   constructor(private http: HttpClient) {}
 
@@ -218,5 +223,9 @@ export class AiService {
         })),
       ),
     );
+  }
+
+  getAllNotifications() {
+    return this.http.get(`${this.clipsApi}/notifications`) as Observable<NotificationDefinition[]>;
   }
 }

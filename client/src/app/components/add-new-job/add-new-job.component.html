@@ -1,0 +1,220 @@
+<div class="ott add-new-clip-dialog">
+  <h2 mat-dialog-title>New AI Job</h2>
+
+  <mat-dialog-content style="padding-top: 10px !important">
+    <div class="job-form">
+      <!-- ROW 1: Job name -->
+      <div class="row row-full">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Job name</mat-label>
+          <input
+            matInput
+            placeholder="Enter job name"
+            [(ngModel)]="aiJobDm.Name"
+            maxlength="50"
+            required
+          />
+          <mat-error *ngIf="!aiJobDm.Name"> Please enter a job name </mat-error>
+        </mat-form-field>
+      </div>
+
+      <!-- ROW 2: Channels + Visibility -->
+      <div class="row row-2-cols">
+        <mat-form-field appearance="outline" class="col-wide">
+          <mat-label>Please select at least one channel</mat-label>
+          <mat-select [(value)]="selectedChannels" multiple>
+            <mat-option *ngFor="let channel of availableChannels" [value]="channel">
+              {{ channel }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="col-narrow">
+          <mat-label>Select Visibility</mat-label>
+          <mat-select placeholder="Select Visibility" [(value)]="aiJobDm.Visibility">
+            <mat-option [value]="VisibilityEnum.Private">{{
+              VisibilityEnum.Private.Value
+            }}</mat-option>
+            <mat-option [value]="VisibilityEnum.Everyone">{{
+              VisibilityEnum.Everyone.Value
+            }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+       <!-- ROW 3: Repeat and weekdays -->
+      <form class="repeat-mode-row" [formGroup]="repeatForm">
+        <mat-form-field appearance="outline" class="select-repeat-mode">
+          <mat-label>Repeat</mat-label>
+          <mat-select
+            formControlName="repeatModeControl"
+            [value]="repeatMode"
+            placeholder="Select Repeat Mode"
+          >
+            <mat-option value="repeat-none">No Repeat</mat-option>
+            <mat-option value="repeat-daily">Daily</mat-option>
+            <mat-option value="repeat-weekly">Weekly</mat-option>
+            <mat-option value="continous">Continous</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field
+          appearance="outline"
+          class="select-weekdays"
+        >
+          <mat-label>Weekdays</mat-label>
+          <mat-select
+            formControlName="repeatWeekDaysControl"
+            [value]="repeatWeekDays"
+            multiple="true"
+            placeholder="Select Weekdays">
+            <mat-option value="sun" >Sunday</mat-option>
+            <mat-option value="mon" >Monday</mat-option>
+            <mat-option value="tue" >Tuesday</mat-option>
+            <mat-option value="wed" >Wednesday</mat-option>
+            <mat-option value="thu" >Thursday</mat-option>
+            <mat-option value="fri" >Friday</mat-option>
+            <mat-option value="sat" >Saturday</mat-option>
+          </mat-select>
+          <mat-error
+            *ngIf="repeatForm.get('repeatWeekDaysControl')?.hasError('atLeastOneRequired')">
+            Please select at least one day
+          </mat-error>
+        </mat-form-field>
+      </form>
+
+      <!-- ROW 4: Date + Time range -->
+      <div class="row row-3-cols">
+        <!-- Date -->
+        <mat-form-field appearance="outline">
+          <mat-label>Date</mat-label>
+          <input matInput [matDatepicker]="picker" [(ngModel)]="selectedDate" />
+          <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+          <mat-datepicker #picker></mat-datepicker>
+        </mat-form-field>
+
+        <!-- From -->
+        <mat-form-field appearance="outline">
+          <mat-label>From</mat-label>
+          <input matInput type="time" [(ngModel)]="fromTime" />
+        </mat-form-field>
+
+        <!-- To -->
+        <mat-form-field appearance="outline">
+          <mat-label>To</mat-label>
+          <input matInput type="time" [(ngModel)]="toTime" />
+        </mat-form-field>
+      </div>
+
+      <!-- ROW 5: Tabs -->
+      <div class="row row-full">
+        <mat-tab-group class="job-tabs">
+          <mat-tab label="Keyword Detection Alerts">
+            <div class="tab-content keyword-tab">
+              <!-- Language selection -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Select the language of your keywords</mat-label>
+                <mat-select
+                  [(value)]="selectedKeywordLanguage"
+                  required
+                  (selectionChange)="onKeywordLanguageChange($event.value)"
+                >
+                  <mat-option *ngFor="let lng of languages" [value]="lng">
+                    {{ lng.DisplayName }}
+                  </mat-option>
+                </mat-select>
+
+                <mat-hint class="helper-text">
+                  Transcripts will be translated to this language before searching.
+                </mat-hint>
+              </mat-form-field>
+
+              <!-- Keywords input -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Enter the keywords to search for, separated by commas</mat-label>
+                <input
+                  matInput
+                  type="text"
+                  [(ngModel)]="searchTerms"
+                  required
+                  placeholder="keyword1, keyword2, keyword3"
+                />
+
+                <mat-hint class="helper-text">
+                  Feed keywords in the language you selected above, comma separated.
+                </mat-hint>
+
+                <mat-error *ngIf="!searchTerms"> Please add keywords </mat-error>
+              </mat-form-field>
+
+              <!-- Alert destinations -->
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Select alert destinations</mat-label>
+                <mat-select
+                  [(value)]="selectedNotifications"
+                  multiple
+                  (selectionChange)="onAlertDestinationsChange(selectedNotifications)"
+                >
+                  <mat-option
+                    *ngFor="let notification of availableNotifications"
+                    [value]="notification.Id"
+                  >
+                    {{ notification.Name }}
+                  </mat-option>
+                </mat-select>
+
+                <mat-hint class="helper-text">
+                  To exit this dialog and adjust the alert destinations,
+                  <a class="inline-link" (click)="gotoNotifications()">click here</a>.
+                </mat-hint>
+              </mat-form-field>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Closed Captions">
+            <div class="tab-content closed-captions-tab">
+              <!-- Enable transcription -->
+              <mat-checkbox [(ngModel)]="saveClosedCaptions" class="cc-checkbox">
+                A full transcription of the audio will be generated alongside keyword detection.
+              </mat-checkbox>
+
+              <!-- Translation languages -->
+              <mat-form-field appearance="outline" class="translation-select">
+                <mat-label>Add Translation Languages (optional)</mat-label>
+
+                <mat-select [(value)]="selectedLanguages" multiple [disabled]="!saveClosedCaptions">
+                  <mat-option *ngFor="let lng of languages" [value]="lng">
+                    {{ lng.DisplayName }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Face Detection">
+            <div class="tab-content simple-detection-tab">
+              <mat-checkbox [(ngModel)]="enableFaceDetection" class="detect-checkbox">
+                Detect faces
+              </mat-checkbox>
+            </div>
+          </mat-tab>
+
+          <mat-tab label="Logo Detection">
+            <div class="tab-content simple-detection-tab">
+              <mat-checkbox [(ngModel)]="enableLogoDetection" class="detect-checkbox">
+                Detect logos
+              </mat-checkbox>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="button-actions">
+    <button mat-stroked-button (click)="onClose()">Close</button>
+    <button mat-raised-button color="primary" (click)="onCreateJob()" [disabled]="!isDialogValid()">
+      Create Job
+    </button>
+  </mat-dialog-actions>
+</div>

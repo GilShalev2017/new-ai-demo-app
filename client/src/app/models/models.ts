@@ -398,3 +398,68 @@ export class UITag {
   text?: string;
   selected?: boolean;
 }
+
+export class LanguageDm {
+  EnglishName?: string;
+  DisplayName: string = '';
+  ProvidersLanguageCode?: { [providerId: string]: string } = {};
+  isTranslated?: boolean;
+}
+
+export class TimeRange {
+  private readonly _from: Date;
+  get from() {
+    return this._from;
+  }
+
+  private readonly _to: Date;
+  get to() {
+    return this._to;
+  }
+
+  constructor(from: Date, to: Date) {
+    this._from = from;
+    this._to = to;
+  }
+
+  toString(): string {
+    return `${this.from} - ${this.to}`;
+  }
+
+  // duration in mSecs
+  durationMSecs(): number {
+    return this.to.getTime() - this.from.getTime();
+  }
+
+  // duration in secs
+  durationSecs(): number {
+    return Math.round(this.durationMSecs() / 1_000);
+  }
+
+  isInRange(d: Date): boolean {
+    return d.getTime() >= this.from.getTime() && d.getTime() <= this.to.getTime();
+  }
+}
+
+export class ProviderDm {
+    ProviderInternalId?: string;
+    InsightTypes: string[] = [];
+    DisplayName?: string;
+    Description?: string;
+    LastUpdatedBy?: string;
+    LastUpdateDate: Date;
+    Cost: number;
+    constructor() {
+        this.LastUpdateDate = new Date();
+        this.Cost = 0;
+    }
+}
+
+export interface InsightTypeDefinition {
+  Name: string;
+  DisplayName: string;
+  SourceInsightType?: string;
+  InsightProviders: ProviderDm[];
+  Prompt?: string;
+  IsCustom?: boolean;
+}

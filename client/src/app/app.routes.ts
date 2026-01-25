@@ -39,12 +39,12 @@ export const routes: Routes = [
     title: 'AI Detections - Media Insight',
   },
   {
-    path: 'scheduled-items',
+    path: 'ai-jobs',
     loadComponent: () =>
       import('./components/ai-rt-jobs/ai-rt-jobs.component').then(
         (m) => m.AiRtJobsComponent
       ),
-    title: 'Scheduled Items - Media Insight',
+    title: 'Ai Jobs',
   },
   {
     path: 'jobs',
