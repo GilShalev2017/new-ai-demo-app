@@ -212,3 +212,189 @@ export interface EvidenceDto {
   text: string;
   score: number;
 }
+
+export class ActEnums {
+  constructor(public Value: string) {}
+  public static getActEnumObjectByValue = (enum_obj: any, value: string) => {
+    const key = Object.keys(enum_obj).find((key) => key === value);
+    return key !== undefined ? enum_obj[key] : undefined;
+  };
+}
+
+export class VisibilityEnum extends ActEnums {
+  static Private = new VisibilityEnum('Private');
+  static Everyone = new VisibilityEnum('Everyone');
+  constructor(Value: string) {
+    super(Value);
+  }
+}
+
+export class RuleRecurrenceEnum extends ActEnums {
+  static readonly Once: RuleRecurrenceEnum = new RuleRecurrenceEnum('Once');
+  static readonly Recurring: RuleRecurrenceEnum = new RuleRecurrenceEnum('Recurring');
+  static readonly Continuous: RuleRecurrenceEnum = new RuleRecurrenceEnum('Continuous');
+  constructor(value: string) {
+    super(value);
+  }
+}
+
+export class Rule {
+  Recurrence!: RuleRecurrenceEnum;
+  Days: number = 0b1111111; // Represents each weekday in binary (Mon to Fri)
+  RuleStart?: string;
+  RuleEnd?: string;
+}
+
+type JobStatus = 'Pending' | 'In Progress' | 'Completed' | 'Failed' | 'Paused' | 'Stopped';
+
+export interface ReportRunHistoryEntry {
+  ReportResultId: string;
+  ActualRunStartTime: Date;
+  ActualRunEndTime: Date;
+  ProcessDurationInMinutes?: number;
+  Status: string;
+  Error?: string;
+  FileSizeBytes?: number;
+  //UI fields
+  DownloadUrl?: string;
+  ErrorMessage?: string;
+  ErrorDetails?: string;
+  WasEmailSent?: boolean;
+  Format?: 'pdf' | 'csv';
+}
+
+export class ChannelResultStatistics {
+  KeywordDetectedAlertsSent?: number;
+  KeywordsDetectionsFound?: string[];
+  FaceDetectedAlertSent?: number;
+  // FaceDetectionsFound?: string[];
+  LogoDetectedAlertSent?: number;
+  LogoDetectionsFound?: string[];
+  Mp4FilesProcessed?: number;
+  Mp3FilesCreated?: number;
+  DistinctAudioLanguages?: string[];
+  DistinctTranslatedLanguages?: string[];
+  Errors?: string[];
+}
+
+export class ResultStatistics {
+  ProcessDurationInMinutes?: number;
+  ChannelStatistics?: { [channelId: string]: ChannelResultStatistics };
+}
+
+export class RunHistoryEntry {
+  ActualRunStartTime?: Date; // Represents the start time of the run
+  ActualRunEndTime?: Date; // Represents the end time of the run
+  BroadcastStartTime?: Date;
+  BroadcastEndTime?: Date;
+  Statistics?: ResultStatistics; // The statistics object for the run
+  errors?: number;
+}
+
+export interface Channel {
+  id: number;
+  displayName: string;
+  recordingRoot: string;
+  liveRecordingRoot: string;
+  physicalName: string;
+  liveThumbnailUrl: string;
+  serverId: number;
+  serverName: string;
+  backupServerName: string;
+  groupId: number;
+  position_in_group: number;
+  logoUrl: string;
+  color: string;
+  loudnessEnabled: boolean;
+  description: string;
+  player?: any;
+  thumb?: string;
+  teletextLng: string[];
+  subtitleLng: string[];
+  audioLng: string[];
+  audioOnly: boolean;
+  framesRoot?: string;
+  framesize?: string;
+  bitrate?: string;
+  ts_id?: number;
+  license?: string[];
+  sibling_channel_ids?: number[];
+  category?: any;
+}
+
+export class AiJobRequest {
+  Id?: string;
+  Name!: string;
+  ChannelIds?: number[];
+  Visibility?: VisibilityEnum;
+  Operations?: string[];
+  BroadcastStartTime?: Date | null;
+  BroadcastEndTime?: Date | null;
+  NotificationIds!: string[];
+  Status?: JobStatus;
+  Error?: string;
+  NextScheduledTime?: Date | undefined;
+  RequestRule?: Rule;
+  TranslationLanguages?: string[];
+  CreatedAt?: Date | null;
+  CreatedBy?: string;
+  Keywords?: string[];
+  KeywordsLangauges?: string[];
+  RunHistory: RunHistoryEntry[] = [];
+}
+
+export class AiJobRequestX extends AiJobRequest {
+  channels: Channel[] = [];
+  notifications: string[] = [];
+  channelsStr: string = '';
+  keywordsStr: string = '';
+  operationsStr: string = '';
+  notificationsStr: string = '';
+  errors: number = 0;
+}
+
+export class JobRequestFilter {
+  Start?: Date;
+  End?: Date;
+  ChannelIds?: number[];
+  Operation?: string;
+  //Text?: string;
+  //AiJobRequestId?: string;
+  //Keywords?: string[];
+  SearchTerm?: string;
+  SortDirection?: number;
+}
+
+export class NotificationWebhookSetup {
+  // Define NotificationWebhookSetup properties
+}
+
+class ACL {
+  // Define ACL properties
+}
+export class NotificationDefinition {
+  Id?: string;
+  Name?: string;
+  ToEmails?: string;
+  SendSNMP?: boolean;
+  WebhookSetup?: NotificationWebhookSetup[];
+  Acl?: ACL;
+  Visibility: VisibilityEnum = VisibilityEnum.Private;
+  LastUpdatedBy?: string;
+  LastUpdateDate?: string;
+  CreatedDate: Date = new Date();
+  MaxAccessRight?: string;
+}
+
+export type IntervalType = 'all' | 'today' | 'lweek' | 'l2week' | 'lmonth' | 'custom';
+
+export interface Interval {
+  intervalType: IntervalType;
+  from?: Date | null;
+  to?: Date | null;
+}
+
+export class UITag {
+  text?: string;
+  selected?: boolean;
+}

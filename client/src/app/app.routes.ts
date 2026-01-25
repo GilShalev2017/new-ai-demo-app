@@ -41,8 +41,8 @@ export const routes: Routes = [
   {
     path: 'scheduled-items',
     loadComponent: () =>
-      import('./components/scheduled-items/scheduled-items.component').then(
-        (m) => m.ScheduledItemsComponent
+      import('./components/ai-rt-jobs/ai-rt-jobs.component').then(
+        (m) => m.AiRtJobsComponent
       ),
     title: 'Scheduled Items - Media Insight',
   },

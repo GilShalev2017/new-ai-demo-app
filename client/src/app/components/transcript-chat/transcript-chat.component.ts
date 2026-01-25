@@ -3,7 +3,7 @@ import { Message, SemanticSearchResponseDto } from '../../models/models';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../shared/material.module';
-import { ClipService } from '../../services/clip.service';
+import { AiService } from '../../services/ai.service';
 import { marked } from 'marked';
 
 @Component({
@@ -35,7 +35,7 @@ export class TranscriptChatComponent implements OnInit {
     'Sentiment analysis xxxxxxxxxxxxxxxxxxxxxxxxxxx',
   ];
 
-  constructor(private clipService: ClipService, private cdr: ChangeDetectorRef) {}
+  constructor(private clipService: AiService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.messages.push({

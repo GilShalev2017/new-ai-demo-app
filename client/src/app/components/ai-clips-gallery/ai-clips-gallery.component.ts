@@ -15,7 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { MaterialModule } from '../../shared/material.module';
 import { Subject } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
-import { ClipService } from '../../services/clip.service';
+import { AiService } from '../../services/ai.service';
 import { Clip, ClipTag, TimeInterval } from '../../models/models';
 import { Router } from '@angular/router';
 
@@ -79,7 +79,7 @@ export class AiClipsGalleryComponent implements OnInit, AfterViewInit, OnDestroy
   private searchSubscription: any;
 
   constructor(
-    private clipService: ClipService,
+    private clipService: AiService,
     private cdr: ChangeDetectorRef,
     private el: ElementRef,
     private router: Router

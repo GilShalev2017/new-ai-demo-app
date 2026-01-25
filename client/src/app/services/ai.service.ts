@@ -15,20 +15,23 @@ import {
   ObjectDetection,
   SentimentData,
   SemanticSearchResponseDto,
+  AiJobRequest,
+  JobRequestFilter,
+  NotificationDefinition,
 } from '../models/models';
 
 @Injectable({
   providedIn: 'root',
 })
-export class ClipService {
+export class AiService {
   /**
    * Used ONLY for static/media files (thumbnails, videos)
    * API calls go through Angular proxy (/api → https://localhost:7176)
    */
   private readonly serverUrl = 'https://localhost:7176';
-
   /** API base (proxied) */
   private readonly clipsApi = '/api/clips';
+  public availableNotifications: NotificationDefinition[] = [];
 
   constructor(private http: HttpClient) {}
 
@@ -45,7 +48,7 @@ export class ClipService {
           ...clip,
           createdAt: new Date(clip.createdAt),
         })),
-      }))
+      })),
     );
   }
 
@@ -57,7 +60,7 @@ export class ClipService {
       map((clip) => ({
         ...clip,
         createdAt: new Date(clip.createdAt),
-      }))
+      })),
     );
   }
 
@@ -69,7 +72,7 @@ export class ClipService {
       map((clip) => ({
         ...clip,
         createdAt: new Date(clip.createdAt),
-      }))
+      })),
     );
   }
 
@@ -81,7 +84,7 @@ export class ClipService {
       map((clip) => ({
         ...clip,
         createdAt: new Date(clip.createdAt),
-      }))
+      })),
     );
   }
 
@@ -181,11 +184,39 @@ export class ClipService {
         ...clip,
         createdAt: new Date(clip.createdAt),
         updatedAt: new Date(clip.updatedAt),
-      }))
+      })),
     );
   }
 
   query(query: string): Observable<SemanticSearchResponseDto> {
-    return this.http.post<SemanticSearchResponseDto>(`${this.clipsApi}/transcript-agent`, { query });
+    return this.http.post<SemanticSearchResponseDto>(`${this.clipsApi}/transcript-agent`, {
+      query,
+    });
+  }
+
+  addNewJob(clip: AiJobRequest): Observable<string> {
+    return this.http.post(`${this.clipsApi}/schedule`, clip) as Observable<string>;
+  }
+
+  getFilteredJobRequests(filter: JobRequestFilter) {
+    return (
+      this.http.post(`${this.clipsApi}/ai-job-requests`, filter) as Observable<AiJobRequest[]>
+    ).pipe(
+      map((jobs) =>
+        jobs.map((job) => ({
+          ...job,
+          CreatedAt: job.CreatedAt ? new Date(job.CreatedAt as any as string) : null,
+          NextScheduledTime: job.NextScheduledTime
+            ? new Date(job.NextScheduledTime as any as string)
+            : null,
+          BroadcastStartTime: job.BroadcastStartTime
+            ? new Date(job.BroadcastStartTime as any as string)
+            : null,
+          BroadcastEndTime: job.BroadcastEndTime
+            ? new Date(job.BroadcastEndTime as any as string)
+            : null,
+        })),
+      ),
+    );
   }
 }

@@ -2,7 +2,7 @@ import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, ViewChild } fr
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MaterialModule } from '../../shared/material.module';
-import { ClipService } from '../../services/clip.service';
+import { AiService } from '../../services/ai.service';
 import {
   CelebrityInsight,
   Clip,
@@ -85,7 +85,7 @@ export class ClipDetailsComponent implements OnDestroy, OnInit, AfterViewInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private clipService: ClipService,
+    private clipService: AiService,
     private cdr: ChangeDetectorRef,
     private dialog: MatDialog,
     private snackBar: MatSnackBar
