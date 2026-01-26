@@ -32,7 +32,7 @@ namespace Server.Repositories.AiJobs
         {
             var mongoClient = new MongoClient(settings.Value.ConnectionString);
             var database = mongoClient.GetDatabase(settings.Value.DatabaseName);
-            _aiJobRequestCollection = database.GetCollection<AiJobRequest>(settings.Value.AiJobRequestsCollectionName);
+            _aiJobRequestCollection = database.GetCollection<AiJobRequest>(CollectionName);
             _bsonCollection = database.GetCollection<BsonDocument>(CollectionName);
             _logger = logger;
         }

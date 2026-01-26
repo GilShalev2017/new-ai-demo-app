@@ -3,7 +3,9 @@ using Serilog;
 using Server;
 using Server.InsightProviders;
 using Server.Repositories;
+using Server.Repositories.AiJobs;
 using Server.Services;
+using Server.Services.AiJobs;
 using Server.Settings;
 using System.Text.Json.Serialization;
 
@@ -71,6 +73,15 @@ builder.Services.AddScoped<IInsightInputBuilder, TranscriptionDependentInputBuil
 builder.Services.AddHttpClient<IEmbeddingProvider, OpenAiEmbeddingProvider>();
 builder.Services.AddScoped<IEntityExtractor, EntityExtractor>();
 builder.Services.AddScoped<IPromptComposer, PromptComposer>();
+
+
+builder.Services.AddSingleton<IAiJobOperationsSvc, AiJobOperationsSvc>();
+builder.Services.AddSingleton<IAiJobRequestRepository, AiJobRequestRepository>();
+builder.Services.AddSingleton<IAiJobResultRepository, AiJobResultRepository>();
+//AiJobSchedulerSvc needs to be registered twice for being a Hostedservice and for DI!
+builder.Services.AddSingleton<AiJobSchedulerSvc>();
+builder.Services.AddHostedService<AiJobSchedulerSvc>(provider => provider.GetService<AiJobSchedulerSvc>()!);
+builder.Services.AddSingleton<IAiJobSvc, AiJobSvc>();
 
 //builder.Services.AddCors(options =>
 //{

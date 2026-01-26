@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Server.Models;
 using Server.Models.AiJobs;
@@ -22,12 +23,14 @@ namespace Server.Repositories.AiJobs
         const string CollectionName = "intelligence_aijob_results";
         private readonly ILogger<AiJobResultRepository> _logger;
         private readonly IMongoCollection<JobResult> _aiJobResultCollection;
+        //private readonly IMongoCollection<BsonDocument> _bsonCollection;
         //private readonly int _mongoItemsLimit = 500;
         public AiJobResultRepository(IOptions<MongoDbSettings> settings, ILogger<AiJobResultRepository> logger)
         {
             var mongoClient = new MongoClient(settings.Value.ConnectionString);
             var database = mongoClient.GetDatabase(settings.Value.DatabaseName);
-            _aiJobResultCollection = database.GetCollection<JobResult>(settings.Value.AiJobResultsCollectionName);
+            _aiJobResultCollection = database.GetCollection<JobResult>(CollectionName);
+            //_bsonCollection = database.GetCollection<BsonDocument>(CollectionName);
 
             _logger = logger;
 
